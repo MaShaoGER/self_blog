@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Skills panel">
+  <g fill="none" stroke="#2f3b52" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M32 10 L54 21.5 L32 33 L10 21.5 Z"/>
+    <path d="M10 32 L32 43.5 L54 32"/>
+    <path d="M10 42.5 L32 54 L54 42.5" opacity="0.55"/>
+  </g>
+</svg>

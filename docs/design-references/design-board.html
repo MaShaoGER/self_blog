@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>self_blog — Industrial Graphic System</title>
+<style>
+  :root{
+    --paper:#EFEBE3; --mint:#D3E4D6; --ink:#17171A; --grey:#6E6A63;
+    --mid:#969189; --light:#B7B1A5; --orange:#E8531F; --pink:#FF2D6F;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{width:1872px;height:1240px;overflow:hidden;}
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(rgba(0,0,0,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,.035) 1px, transparent 1px);
+    background-size:40px 40px;
+    padding:44px 48px;
+    font-family:Arial,"Helvetica Neue","Microsoft YaHei","PingFang SC",sans-serif;
+    color:var(--ink);
+  }
+  .mono{font-family:Consolas,"Courier New",monospace;letter-spacing:.06em;}
+  .meta{font-family:Consolas,monospace;font-size:10px;letter-spacing:.14em;color:var(--grey);}
+  .rule{height:1px;background:var(--ink);}
+  .rule-soft{height:1px;background:rgba(23,23,26,.28);}
+
+  /* header */
+  header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--ink);}
+  .h-title{font-size:34px;font-weight:900;letter-spacing:-.015em;line-height:1;margin-top:5px;}
+  .h-right{text-align:right;}
+  .h-right .date{font-size:13px;}
+  .h-right .sub{font-size:10px;color:var(--grey);margin-top:4px;}
+
+  /* palette */
+  .palette{display:flex;gap:20px;padding-bottom:18px;border-bottom:1px solid rgba(23,23,26,.28);}
+  .swatch{width:176px;}
+  .chip{width:176px;height:100px;border:1px solid var(--ink);}
+  .chip-name{font-family:Consolas,monospace;font-size:10px;letter-spacing:.1em;margin-top:8px;}
+  .chip-hex{font-family:Consolas,monospace;font-size:10px;color:var(--grey);margin-top:2px;}
+
+  /* main type + marks */
+  .main{display:grid;grid-template-columns:1fr 600px;gap:56px;padding:20px 0 16px;border-bottom:1px solid rgba(23,23,26,.28);}
+  .sec-label{font-family:Consolas,monospace;font-size:10px;letter-spacing:.14em;color:var(--grey);margin-bottom:8px;}
+  .cn-h{font-size:54px;font-weight:900;line-height:1;letter-spacing:-.02em;font-family:"Microsoft YaHei","PingFang SC",sans-serif;}
+  .en-h{font-size:34px;font-weight:900;line-height:1;letter-spacing:-.02em;margin-top:12px;}
+  .note{font-size:12.5px;color:var(--grey);margin-top:10px;line-height:1.5;}
+  .mono-row{font-family:Consolas,monospace;font-size:13px;letter-spacing:.06em;margin-top:14px;display:flex;gap:28px;flex-wrap:wrap;}
+  .body-demo{font-size:17px;line-height:1.7;margin-top:10px;}
+
+  .marks{display:flex;flex-wrap:wrap;gap:0 34px;align-content:flex-start;}
+  .mark{width:110px;margin-bottom:18px;}
+  .mark svg,.mark .box{display:block;}
+  .mark-label{font-size:11px;color:var(--grey);margin-top:7px;letter-spacing:.02em;}
+  .sticker{width:132px;height:44px;background:#fff;border:2px solid var(--ink);padding:6px 8px;font-family:Consolas,monospace;}
+  .sticker b{display:block;font-size:10px;letter-spacing:.06em;}
+  .sticker i{display:block;font-style:normal;font-size:9px;color:var(--grey);letter-spacing:.06em;margin-top:3px;}
+
+  /* components */
+  .components{padding:14px 0 10px;border-bottom:1px solid rgba(23,23,26,.28);}
+  .row{display:grid;grid-template-columns:96px 1fr 118px 82px 62px 1fr 34px;align-items:center;height:64px;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);}
+  .row .no{font-family:Consolas,monospace;font-size:12px;color:var(--grey);}
+  .row .ttl{font-size:24px;font-weight:800;letter-spacing:-.01em;}
+  .row .dt,.row .meta2{font-family:Consolas,monospace;font-size:11px;color:var(--grey);}
+  .tag{display:inline-block;background:var(--orange);color:#fff;font-family:Consolas,monospace;font-size:10px;letter-spacing:.1em;padding:6px 10px;width:max-content;}
+  .row .arrow{font-size:22px;font-weight:800;justify-self:end;}
+  .row-note{font-size:11.5px;color:var(--grey);margin-top:8px;}
+
+  .comp-grid{display:grid;grid-template-columns:210px 300px 1fr;gap:44px;margin-top:18px;align-items:start;}
+  .btn{width:200px;height:40px;background:var(--orange);border:1px solid var(--ink);color:#fff;font-family:Consolas,monospace;font-size:12px;letter-spacing:.08em;display:flex;align-items:center;justify-content:space-between;padding:0 14px;box-shadow:3px 3px 0 var(--ink);}
+  .btn-note{font-size:11px;color:var(--grey);margin-top:10px;}
+  .fig{width:300px;height:120px;border:1px solid var(--ink);padding:10px 12px;}
+  .fig b{display:block;font-family:Consolas,monospace;font-size:11px;letter-spacing:.08em;}
+  .fig span{display:block;font-size:11px;color:var(--grey);margin-top:6px;}
+  .fig em{display:block;font-style:normal;font-family:Consolas,monospace;font-size:10px;color:var(--grey);margin-top:4px;letter-spacing:.05em;}
+  .fig-note{font-size:11px;color:var(--grey);margin-top:10px;}
+  .status .led{display:inline-block;width:6px;height:6px;border-radius:50%;background:#2F7A3C;margin-right:7px;}
+  .status .s1{font-family:Consolas,monospace;font-size:12px;color:#2F7A3C;letter-spacing:.08em;}
+  .status .s2,.status .s3{font-family:Consolas,monospace;font-size:10px;color:var(--grey);margin-top:6px;letter-spacing:.06em;}
+  .status-note{font-size:11px;color:var(--grey);margin-top:10px;}
+
+  /* refs */
+  .refs{display:flex;gap:40px;padding:14px 0 6px;border-bottom:1px solid rgba(23,23,26,.28);}
+  .ref{width:320px;}
+  .ref img{width:320px;height:170px;object-fit:cover;border:1px solid var(--ink);display:block;filter:saturate(.95);}
+  .ref .cap{font-family:Consolas,monospace;font-size:10px;letter-spacing:.08em;margin-top:7px;}
+
+  footer{display:flex;justify-content:space-between;padding-top:12px;}
+  footer .f1,footer .f2{font-family:Consolas,monospace;font-size:9.5px;letter-spacing:.1em;color:var(--grey);}
+</style>
+</head>
+<body>
+  <header>
+    <div>
+      <div class="meta">SELF_BLOG&nbsp;&nbsp;/&nbsp;&nbsp;VISUAL REFERENCE&nbsp;&nbsp;/&nbsp;&nbsp;V0.1</div>
+      <div class="h-title">INDUSTRIAL GRAPHIC SYSTEM</div>
+    </div>
+    <div class="h-right">
+      <div class="mono date">2026.10.18</div>
+      <div class="sub mono">REF. SET 01–07 / SELF_BLOG</div>
+    </div>
+  </header>
+
+  <section class="palette">
+    <div class="swatch"><div class="chip" style="background:#EFEBE3"></div><div class="chip-name">PAPER</div><div class="chip-hex">#EFEBE3</div></div>
+    <div class="swatch"><div class="chip" style="background:#D3E4D6"></div><div class="chip-name">MINT</div><div class="chip-hex">#D3E4D6</div></div>
+    <div class="swatch"><div class="chip" style="background:#17171A"></div><div class="chip-name">INK</div><div class="chip-hex">#17171A</div></div>
+    <div class="swatch"><div class="chip" style="background:#E8531F"></div><div class="chip-name">SAFETY ORANGE</div><div class="chip-hex">#E8531F</div></div>
+    <div class="swatch"><div class="chip" style="background:#FF2D6F"></div><div class="chip-name">SIGNAL PINK</div><div class="chip-hex">#FF2D6F</div></div>
+    <div class="swatch"><div class="chip" style="background:#B7B1A5"></div><div class="chip-name">GREY</div><div class="chip-hex">#B7B1A5</div></div>
+  </section>
+
+  <section class="main">
+    <div>
+      <div class="sec-label">TYPE SYSTEM</div>
+      <div class="cn-h">秩序源自熵</div>
+      <div class="en-h">ORDER FROM ENTROPY / 2026</div>
+      <div class="note">标题：ARCHIVO 800 / 思源黑体 HEAVY · 64px · 行高 0.95 · 字距 -0.02em</div>
+      <div class="mono-row" style="margin-top:14px;font-size:12px;">
+        <span>NO.042</span><span>ARCHIVE</span><span>ESSAY</span><span>FIG.01</span><span>2377</span><span>C-ENGINE</span>
+      </div>
+      <div class="note">标签：IBM PLEX MONO 500 · 11px · 全大写 · 字距 +0.08em</div>
+      <div class="body-demo">工业平面不靠装饰，靠栅格与编号。正文先给结论，再给参数。</div>
+      <div class="note">正文：INTER / 思源黑体 400 · 16–17px · 行高 1.75 · 行宽 62–68ch</div>
+    </div>
+    <div class="marks">
+      <div class="mark">
+        <svg width="46" height="46"><rect x="1" y="1" width="44" height="44" fill="none" stroke="#17171A"/><line x1="7" y1="7" x2="39" y2="39" stroke="#17171A"/><line x1="39" y1="7" x2="7" y2="39" stroke="#17171A"/></svg>
+        <div class="mark-label">叉框</div>
+      </div>
+      <div class="mark">
+        <svg width="46" height="46"><path d="M1 13V1h12 M45 13V1H33 M1 33v12h12 M45 33v12H33" fill="none" stroke="#17171A"/></svg>
+        <div class="mark-label">角标</div>
+      </div>
+      <div class="mark" style="width:140px;">
+        <svg width="140" height="46"></svg>
+        <div class="mark-label">条码</div>
+      </div>
+      <div class="mark" style="width:150px;">
+        <div class="sticker"><b>ARCHIVE / 2377</b><i>C-ENGINE · REV.02</i></div>
+        <div class="mark-label">贴纸</div>
+      </div>
+      <div class="mark" style="width:140px;">
+        <svg width="140" height="30">
+          <line x1="0" y1="1" x2="120" y2="1" stroke="#17171A"/>
+          <g stroke="#17171A">
+            <line x1="0" y1="1" x2="0" y2="11"/><line x1="24" y1="1" x2="24" y2="11"/><line x1="48" y1="1" x2="48" y2="11"/><line x1="72" y1="1" x2="72" y2="11"/><line x1="96" y1="1" x2="96" y2="11"/><line x1="120" y1="1" x2="120" y2="11"/>
+            <line x1="6" y1="1" x2="6" y2="6"/><line x1="12" y1="1" x2="12" y2="6"/><line x1="18" y1="1" x2="18" y2="6"/><line x1="30" y1="1" x2="30" y2="6"/><line x1="36" y1="1" x2="36" y2="6"/><line x1="42" y1="1" x2="42" y2="6"/><line x1="54" y1="1" x2="54" y2="6"/><line x1="60" y1="1" x2="60" y2="6"/><line x1="66" y1="1" x2="66" y2="6"/><line x1="78" y1="1" x2="78" y2="6"/><line x1="84" y1="1" x2="84" y2="6"/><line x1="90" y1="1" x2="90" y2="6"/><line x1="102" y1="1" x2="102" y2="6"/><line x1="108" y1="1" x2="108" y2="6"/><line x1="114" y1="1" x2="114" y2="6"/>
+          </g>
+        </svg>
+        <div class="mark-label">刻度尺</div>
+      </div>
+      <div class="mark" style="width:140px;">
+        <svg width="140" height="40"><defs><pattern id="h" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#17171A"/></pattern></defs><rect x="1" y="1" width="138" height="32" fill="url(#h)" stroke="#17171A"/></svg>
+        <div class="mark-label">警示带</div>
+      </div>
+      <div class="mark" style="width:100px;">
+        <svg width="40" height="40"><line x1="0" y1="20" x2="40" y2="20" stroke="#17171A"/><line x1="20" y1="0" x2="20" y2="40" stroke="#17171A"/></svg>
+        <div class="mark-label">定位</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="components">
+    <div class="sec-label">COMPONENTS</div>
+    <div class="row">
+      <div class="no">NO.042</div>
+      <div class="ttl">Order From Entropy</div>
+      <div class="dt">2026-10-18</div>
+      <div class="tag">ESSAY</div>
+      <div class="dt">12 MIN</div>
+      <div></div>
+      <div class="arrow">→</div>
+    </div>
+    <div class="row-note">文章行：编号 / 标题 / 日期 / 分类贴纸 / 阅读时长 / 箭头 · 行高 72 · hover 出底色</div>
+
+    <div class="comp-grid">
+      <div>
+        <div class="btn"><span>READ ENTRY</span><span>→</span></div>
+        <div class="btn-note">按钮：实体键帽 · 2px 位移 · 1px 描边</div>
+      </div>
+      <div>
+        <div class="fig"><b>FIG. 01</b><span>CIRCUIT BOARD ASSEMBLY</span><em>SSA / 2024 / 1200×800</em></div>
+        <div class="fig-note">图片：1px 边框 + mono 图注 · 无圆角</div>
+      </div>
+      <div class="status">
+        <div class="s1"><span class="led"></span>SYS.ONLINE</div>
+        <div class="s2">ARCHIVE 2019–2026 / 48 ENTRIES</div>
+        <div class="s3">LAST UPDATE 2026.10.18</div>
+        <div class="status-note">状态行：LED 点 / mono / 灰</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="refs">
+    <div class="ref"><img src="source/06-deimos-order-from-entropy.png" alt=""><div class="cap">REF.01&nbsp;&nbsp;DEIMOS / ORDER FROM ENTROPY</div></div>
+    <div class="ref"><img src="source/07-build-printed-communication.png" alt=""><div class="cap">REF.02&nbsp;&nbsp;BUILD / PRINTED COMMUNICATION</div></div>
+    <div class="ref"><img src="source/01-mspt-cd-player.png" alt=""><div class="cap">REF.03&nbsp;&nbsp;MSPT / CD PLAYER CONCEPT</div></div>
+  </section>
+
+  <footer>
+    <div class="f1">SELF_BLOG DESIGN REFERENCE · INDUSTRIAL GRAPHIC · 2026.10.18</div>
+    <div class="f2">PAPER EFEBE3 · INK 17171A · ORANGE E8531F · PINK FF2D6F</div>
+  </footer>
+
+  <script>
+    // 生成条码
+    (function(){
+      var svg = document.querySelector('.marks .mark svg');
+      var marks = document.querySelectorAll('.marks .mark');
+      var target = null;
+      marks.forEach(function(m){ if (m.querySelector('.mark-label') && m.querySelector('.mark-label').textContent === '条码') target = m; });
+      if (!target) return;
+      var s = target.querySelector('svg');
+      s.setAttribute('width','140'); s.setAttribute('height','46');
+      var x = 0, seed = 7;
+      function rnd(){ seed = (seed*16807)%2147483647; return seed/2147483647; }
+      var html = '';
+      while (x < 138) {
+        var w = [1,1,2,3][Math.floor(rnd()*4)];
+        html += '<rect x="'+x+'" y="1" width="'+w+'" height="44" fill="#17171A"/>';
+        x += w + [1,2,3][Math.floor(rnd()*3)];
+      }
+      s.innerHTML = html;
+    })();
+  </script>
+</body>
+</html>
