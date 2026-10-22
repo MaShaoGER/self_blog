@@ -1,11 +1,11 @@
-import { assertAdmin } from "@/lib/auth";
+import { assertSession } from "@/lib/auth";
 import { assertSameOrigin } from "@/lib/request";
 import { MAX_UPLOAD_BYTES, UploadError, saveUpload } from "@/lib/uploads";
 
 export async function POST(req: Request) {
   try {
     await assertSameOrigin(req);
-    await assertAdmin();
+    await assertSession();
   } catch (res) {
     if (res instanceof Response) return res;
     throw res;

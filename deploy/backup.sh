@@ -12,6 +12,10 @@ BACKUP_DIR="${BACKUP_DIR:-deploy/backups}"
 BACKUP_KEEP="${BACKUP_KEEP:-14}"
 BACKUP_REMOTE="${BACKUP_REMOTE:-}"
 
+case "$BACKUP_KEEP" in
+  ''|*[!0-9]*|0*) echo "BACKUP_KEEP 必须是正整数。" >&2; exit 1 ;;
+esac
+
 mkdir -p "$BACKUP_DIR"
 
 # 目录锁：cron 重叠或手动触发时，后一个进程直接退出。进程被 kill -9 会留下锁，
@@ -42,15 +46,19 @@ if ! tar -tzf "$partial" >/dev/null 2>&1; then
 fi
 mv "$partial" "$archive"
 
-# 保留最近 BACKUP_KEEP 份（tail 从 KEEP+1 开始，因为列表里含刚生成的这份）。
-ls -1t "$BACKUP_DIR"/data-*.tar.gz 2>/dev/null | tail -n +"$((BACKUP_KEEP + 1))" | xargs -r rm --
 echo "已备份到 $archive"
 
 # 可选异地：设置了 BACKUP_REMOTE 且装了 rclone 时再传一份。
 if [ -n "$BACKUP_REMOTE" ]; then
   if command -v rclone >/dev/null 2>&1; then
-    rclone copy "$archive" "$BACKUP_REMOTE" && echo "已同步到 $BACKUP_REMOTE"
+    rclone copy "$archive" "$BACKUP_REMOTE"
+    echo "已同步到 $BACKUP_REMOTE"
   else
-    echo "设置了 BACKUP_REMOTE 但没装 rclone，跳过异地同步。" >&2
+    echo "设置了 BACKUP_REMOTE 但没装 rclone；本地备份已保留，异地同步失败。" >&2
+    exit 1
   fi
 fi
+
+# 异地同步成功后再清理历史；read 保留目录中的空格，避免 xargs 拆开路径。
+ls -1t "$BACKUP_DIR"/data-*.tar.gz 2>/dev/null | tail -n +"$((BACKUP_KEEP + 1))" |
+  while IFS= read -r old; do rm -- "$old"; done

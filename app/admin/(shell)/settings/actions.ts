@@ -2,13 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { assertAdmin } from "@/lib/auth";
-import { saveSettings } from "@/lib/settings";
+import { saveSettings, type SettingsPatch } from "@/lib/settings";
+import { HOMEPAGE_GROUPS, SettingsValidationError } from "@/lib/homepage-settings";
 import type { SiteSettings } from "@/lib/types";
 
 export type SettingsState =
   | { status: "idle" }
   | { status: "saved"; savedAt: string }
-  | { status: "error"; message: string; field?: keyof SiteSettings };
+  | { status: "error"; message: string; field?: keyof SiteSettings | `homepage.${string}` };
 
 const LIMITS = {
   title: 60,
@@ -49,18 +50,20 @@ export async function saveSettingsAction(_prev: SettingsState, form: FormData): 
     return { status: "error", field: "email", message: "邮箱格式不正确" };
   }
 
-  const patch: Partial<SiteSettings> = {
+  const patch: SettingsPatch = {
     ...values,
     // 可选字段留空时存 undefined，前台据此隐藏对应链接
     email: values.email || undefined,
     github: values.github || undefined,
     x: values.x || undefined,
     commentsAutoApprove: form.get("commentsAutoApprove") === "on",
+    homepage: Object.fromEntries(HOMEPAGE_GROUPS.flatMap(({ fields }) => fields.map(({ key }) => [`${key}`, form.get(`homepage.${key}`)]))),
   };
 
   try {
     await saveSettings(patch);
   } catch (err) {
+    if (err instanceof SettingsValidationError) return { status: "error", field: err.field as keyof SiteSettings | `homepage.${string}`, message: err.message };
     console.error("save settings failed", err);
     return { status: "error", message: "保存失败，请稍后重试" };
   }

@@ -34,7 +34,8 @@ function Section({
   );
 }
 
-export default async function AdminHome() {
+export default async function AdminHome({ searchParams }: { searchParams: Promise<{ denied?: string }> }) {
+  const { denied } = await searchParams;
   const [posts, comments] = await Promise.all([getAllPostsAdmin(), getAllComments()]);
   const now = Date.now();
 
@@ -52,6 +53,7 @@ export default async function AdminHome() {
 
   return (
     <AdminPage>
+      {denied === "1" && <p role="status" className="mb-5 border border-line-strong bg-surface px-4 py-3 text-[0.875rem] text-ink-soft">账号管理和站点设置需要管理员权限。你可以继续管理文章、图库和评论。</p>}
       <PageHeader
         title="概览"
         description={

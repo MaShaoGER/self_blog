@@ -26,6 +26,7 @@ yarn-error.log*
 *.pem
 .tmp-shot/
 .tools/
+.deploy/
 
 # editor
 .vscode/
@@ -35,10 +36,13 @@ yarn-error.log*
 data/uploads/
 data/comments.json
 data/sessions.json
+data/accounts.json
 data/settings.json
 
 # deployment backups
 deploy/backups/
+deploy/restore-*/
+deploy/pre-restore-*/
 
 # testing
 playwright-report/

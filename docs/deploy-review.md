@@ -6,6 +6,16 @@
 
 本文件只列待改进项与验收方式，不重复 `DEPLOY.md` 的操作步骤。
 
+## 当前进度（2026-10-22）
+
+以下评审正文保留原始发现，不能把每项都视为当前仍未修复。当前代码核查结果：
+
+- 已落地：Git 基线提交、构建 registry 参数、workspace 配置复制、文章缓存、Caddy 图片直出、构建上下文裁剪、文章入库、CSP、日志封顶、只读根文件系统与健康依赖。
+- 本轮已落地：固定 Node/Caddy 版本、pnpm standalone 的 sharp 原生依赖追踪、独立数据健康检查、SVG 解码阻断和异地备份失败报告。
+- 仍需外部条件验收：远程仓库地址与推送、真实公网域名与证书、异地备份与日常监控。
+- 本机没有 Docker；Linux 验收在 VPS 执行。具体命令与本轮结果见 `DEPLOY.md` 和 `docs/security-fix-plan.md`。
+- 后续已在 VPS 上通过 Linux 镜像、sharp 上传、Secure Cookie、重启持久化与备份恢复校验；部署为 SSH 隧道预览，尚无公网域名。实际部署记录见 `docs/vps-preview.md`。
+
 ---
 
 ## 优先级总览
@@ -151,7 +161,7 @@ logging:
 
 ### P2-6 无可用性监控
 
-个人博客建议最低成本方案：外部探活（UptimeRobot / healthchecks.io）打 `/robots.txt`（现成的动态路由，能同时验证 Node 与数据目录可读），异常发邮件。
+原评审建议使用 `/robots.txt`，但本轮发现它只生成 SEO 规则，不检查数据目录。现已增加 `/healthz`，检查实际数据目录读写与基础 JSON；外部探活应使用该地址，通知渠道由部署者配置。
 
 ---
 
@@ -181,6 +191,7 @@ logging:
 - 在**没有 `.env.local`、没有 `data/`** 的条件下 `pnpm build` 仍通过（等价 Dockerfile 构建阶段）
 - 以 standalone 方式启动生产服务，前台/文章/RSS/sitemap/login 均 200，`/admin` 307
 - 反向代理、安全头、限流、路径穿越防护、XSS 转义等代码层审查
+- 2026-10-22：Node 24.22.1 下 `pnpm check:release` 通过；15 项功能测试与 1 项隔离生产包集成测试通过，sharp Windows 原生编码、图片响应、认证跳转与健康状态故障恢复均实际执行。
 
 **未验证（受环境限制）**
 - 本机没有 Docker，**镜像构建与容器运行未实测**

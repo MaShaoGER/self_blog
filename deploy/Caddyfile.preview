@@ -1,0 +1,35 @@
+{
+	admin off
+	auto_https disable_redirects
+}
+
+https://localhost {
+	tls internal
+	encode zstd gzip
+	request_body {
+		max_size 20MB
+	}
+	header -Server
+
+	handle /uploads/* {
+		root * /srv
+		header Cache-Control "public, max-age=31536000, immutable"
+		header X-Content-Type-Options "nosniff"
+		route {
+			file_server {
+				pass_thru
+			}
+			reverse_proxy blog:3000 {
+				header_up X-Forwarded-For {remote_host}
+				header_up X-Real-IP {remote_host}
+			}
+		}
+	}
+
+	handle {
+		reverse_proxy blog:3000 {
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Real-IP {remote_host}
+		}
+	}
+}

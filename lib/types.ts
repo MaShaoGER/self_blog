@@ -1,3 +1,5 @@
+import type { HomePageSettings } from "./homepage-settings";
+
 export type PostStatus = "draft" | "published" | "scheduled";
 
 export type PostMeta = {
@@ -64,6 +66,7 @@ export type Project = {
 };
 
 export type SiteSettings = {
+  homepage: HomePageSettings;
   title: string;
   tagline: string;
   description: string;
@@ -78,6 +81,9 @@ export type SiteSettings = {
 
 export type Session = {
   id: string;
+  /** Missing on legacy sessions, which are no longer accepted. */
+  accountId?: string;
+  accountVersion?: number;
   createdAt: string;
   lastSeenAt: string;
   expiresAt: string;

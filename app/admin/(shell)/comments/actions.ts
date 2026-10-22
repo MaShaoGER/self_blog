@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { assertAdmin } from "@/lib/auth";
+import { assertSession } from "@/lib/auth";
 import { deleteComment, setCommentStatus } from "@/lib/comments";
 import type { CommentStatus } from "@/lib/types";
 
@@ -13,14 +13,14 @@ function revalidate() {
 }
 
 export async function setCommentStatusAction(id: string, status: CommentStatus): Promise<void> {
-  await assertAdmin();
+  await assertSession();
   if (typeof id !== "string" || !id || !STATUSES.includes(status)) throw new Error("参数不正确");
   await setCommentStatus(id, status);
   revalidate();
 }
 
 export async function deleteCommentAction(id: string): Promise<void> {
-  await assertAdmin();
+  await assertSession();
   if (typeof id !== "string" || !id) throw new Error("参数不正确");
   await deleteComment(id);
   revalidate();

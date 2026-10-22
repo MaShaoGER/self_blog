@@ -1,14 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { checkPassword, createSession, destroyCurrentSession } from "@/lib/auth";
+import { createSession, destroyCurrentSession } from "@/lib/auth";
+import { attemptLogin } from "@/lib/login-attempt";
 import { clientIp } from "@/lib/request";
-import { hit, peek, reset } from "@/lib/rate-limit";
 
 export type LoginState = { error?: string };
-
-const LIMIT = 5;
-const WINDOW_MS = 15 * 60 * 1000;
 
 function safeNext(v: FormDataEntryValue | null): string {
   const s = typeof v === "string" ? v : "";
@@ -17,17 +14,13 @@ function safeNext(v: FormDataEntryValue | null): string {
 }
 
 export async function login(_prev: LoginState, form: FormData): Promise<LoginState> {
-  const key = `login:${await clientIp()}`;
-  if (!peek(key, LIMIT)) {
-    return { error: "尝试次数过多，请 15 分钟后再试" };
+  const result = await attemptLogin(await clientIp(), form.get("username"), form.get("password"));
+  if (result.status !== "authenticated") {
+    return { error: result.status === "limited"
+      ? "尝试次数过多，请 15 分钟后再试"
+      : "用户名或密码不正确，或账号已停用" };
   }
-  const password = String(form.get("password") ?? "");
-  if (!password || !checkPassword(password)) {
-    const { ok } = hit(key, LIMIT, WINDOW_MS);
-    return { error: ok ? "密码不对" : "尝试次数过多，请 15 分钟后再试" };
-  }
-  reset(key);
-  await createSession();
+  await createSession(result.account);
   redirect(safeNext(form.get("next")));
 }
 

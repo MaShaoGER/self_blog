@@ -7,6 +7,13 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
 ];
 
+const sharpRuntimeFiles = [
+  "./node_modules/sharp/**/*",
+  "./node_modules/@img/**/*",
+  // pnpm keeps optional native packages here rather than in top-level @img.
+  "./node_modules/.pnpm/@img+sharp-*/node_modules/@img/**/*",
+];
+
 const nextConfig: NextConfig = {
   // Self-contained server bundle for the Docker image.
   output: "standalone",
@@ -16,11 +23,11 @@ const nextConfig: NextConfig = {
   // sharp ships native binaries; keep it out of the server bundle.
   serverExternalPackages: ["sharp"],
   // ...but trace them into the standalone output for routes that import lib/uploads.
-  // On Windows @vercel/nft cannot run ldd, so the .so files are missing there.
+  // Include companion DLLs / shared libraries that native-module tracing can miss.
   outputFileTracingIncludes: {
-    "/api/upload": ["./node_modules/sharp/**/*", "./node_modules/@img/**/*"],
-    "/uploads/[...path]": ["./node_modules/sharp/**/*", "./node_modules/@img/**/*"],
-    "/admin/media": ["./node_modules/sharp/**/*", "./node_modules/@img/**/*"],
+    "/api/upload": sharpRuntimeFiles,
+    "/uploads/*": sharpRuntimeFiles,
+    "/admin/media": sharpRuntimeFiles,
   },
   experimental: {
     serverActions: {

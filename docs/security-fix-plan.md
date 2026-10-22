@@ -8,6 +8,23 @@
 核对时间：2026-10-22
 核对范围：`package.json` / `pnpm-lock.yaml` / `Dockerfile` / `docker-compose.yml` / `deploy/Caddyfile`
 
+## 本轮修复记录（2026-10-22）
+
+本文后续版本表保留的是修复前基线。以下状态以本轮代码和实际验收为准：
+
+- Docker 的 base / runner 已共用 `NODE_VERSION=24.22.1`；Caddy 已固定为 `2.11.7-alpine`。这两个标签已核对 Docker 官方镜像清单，并在 VPS 上完成 Linux 构建与运行验收。
+- `.node-version`、`.nvmrc` 和 `package.json#engines` 已声明 Node 24.22.1 基线。本机系统 Node 仍是 24.18.0；已下载官方 24.22.1 便携运行时并校验 SHA-256，本轮验证使用它执行。
+- 官方 Windows 安装包已下载到 `.tools/node-v24.22.1-x64.msi`，SHA-256 与官方发布页一致，Authenticode 签名为有效的 OpenJS Foundation。当前进程没有管理员权限，系统级安装仍待管理员运行。
+- 发布审计使用 `pnpm audit:release`（官方源，仅 HIGH / CRITICAL 阻断）；`pnpm audit:prod` 展示完整结果。当前仍有 1 项 `sprintf-js` 中危，没有 HIGH / CRITICAL。
+- SVG 原生解码已在上传模块初始化时禁用；回归验证覆盖 SVG 元数据读取拒绝、普通图片转 WebP、尺寸限制、元数据移除与非法路径。
+- 已补全 pnpm 的 sharp/libvips 原生依赖追踪。独立复制生产包到系统临时目录，实际验证原生编码、`/uploads` WebP 字节与响应类型、后台 307 跳转、`/healthz` 故障与恢复，以及容器健康脚本。
+- 新 `/healthz` 检查真实数据目录读写和基础 JSON；备份设置远端却无法同步时非零退出，并保留本地新旧备份。恢复说明已改为停服务后整目录替换，保留旧数据回滚副本。
+- Node 24.22.1 下 `pnpm check:release` 退出 0：类型检查、无告警生产构建、15 项功能测试、1 项独立生产包集成测试、发布审计均通过。Linux Docker 与公网域名检查不包含在此结果中。
+- Git 已有基线提交 `52e6169`；远程仓库仍为空。未创建或推送外部仓库，也未公开文章与测试草稿。
+- 后续已在用户 VPS 完成 Linux Docker 构建与 SSH 隧道 HTTPS 预览验收，含实际登录、上传、容器重启和备份恢复比对。详见 `docs/vps-preview.md`；尚未绑定公网域名，也未配置异地备份或监控。
+
+运行时版本来源：[Node 24.22.1 发布页](https://nodejs.org/en/blog/release/v24.22.1)、[Node 官方镜像清单](https://raw.githubusercontent.com/docker-library/official-images/master/library/node)、[Caddy 官方镜像清单](https://raw.githubusercontent.com/docker-library/official-images/master/library/caddy)。
+
 ---
 
 ## 1. 版本基线
@@ -73,8 +90,9 @@ CVE-2026-55458（WebSocket 101 响应未剥离 hop-by-hop 头）、GHSA-6365（f
 当前 `caddy:2.10-alpine` 已不在补丁线。
 
 **可达性说明**：本项目 `deploy/Caddyfile` 只使用 `reverse_proxy` 与 `file_server`，
-未启用 FastCGI、`forward_auth`、WebSocket、模板函数和 remote admin，上述漏洞在当前用法下均不可达。
-升级属于「低成本消除长期隐患」，优先级低于 Node，但仍建议上线前完成。
+未配置 FastCGI、`forward_auth`、模板函数和 remote admin。WebSocket 升级由 `reverse_proxy` 自动处理，
+不能仅根据没有显式 WebSocket 配置就判定相关漏洞不可达；还需检查上游是否能返回 HTTP 101。
+已固定到 2.11.7，以覆盖相关修复和 2.11.6 的 HTTP/2 回归修复，部署后仍需检查实际运行版本。
 
 **做法**：`docker-compose.yml`
 
@@ -94,13 +112,14 @@ curl -sI https://你的域名 | grep -i strict-transport-security
 
 ### P0-3 建立 Git 基线
 
-**依据**：`docs/deploy-review.md` 的 P0-1——仓库没有 remote，`DEPLOY.md` 的 `git clone` 与服务器 `git pull` 流程无法执行。
+**当前状态**：已有基线提交；仓库仍没有 remote，`DEPLOY.md` 的 `git clone` 与服务器 `git pull` 流程尚不能验收。
 
 **做法**
 
 ```sh
-git add -A
-git commit -m "chore: 完成前台/后台/部署与安全基线"
+# 先检查待提交内容，尤其不要纳入 .env、图片、评论和会话数据。
+git status --short
+git diff --stat
 git remote add origin <远程仓库地址>
 git push -u origin main
 ```
@@ -128,7 +147,7 @@ pnpm audit --prod --registry=https://registry.npmjs.org
 ### P1-2 sharp 解码面纵深防御（可选）
 
 上传白名单已排除 SVG（仅 jpeg/png/webp/gif/avif/heif/tiff），且所有上传会重编码为 WebP。
-如需再收紧，可在 `lib/uploads.ts` 初始化处禁用 SVG 解码：
+本轮已在 `lib/uploads.ts` 初始化处禁用 SVG 解码：
 
 ```ts
 import sharp from "sharp";
@@ -154,7 +173,7 @@ curl -sI https://你的域名 | grep -iE "content-security-policy|strict-transpo
 1. **镜像重建**：Node/Caddy 镜像的安全修复只在重新构建时生效。建议每月执行一次
    `docker compose pull && docker compose up -d --build`，或固定在备份窗口后执行。
 2. **备份**：`deploy/backup.sh` 已保留 14 份；仍需异地副本，并在上线第一周做一次恢复演练。
-3. **监控**：外部探活建议打 `/robots.txt`（同时验证 Node 与数据目录），异常发邮件。
+3. **监控**：外部探活使用 `/healthz`，验证 Node、数据目录读写与基础配置数据；`/robots.txt` 仅验证 SEO 路由响应，不能证明数据卷可用。异常通知渠道由部署者配置。
 4. **会话与凭据**：`.env` 单独备份到密码管理器；`BLOG_SESSION_SECRET` 轮换会使所有设备重新登录。
 5. **复查节奏**：每月扫一次依赖审计；Next.js / Node.js / Caddy 发布安全公告时按本文第 1 节对照版本。
 

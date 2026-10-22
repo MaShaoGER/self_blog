@@ -2,7 +2,11 @@
 
 需要：一台装了 Docker（含 compose 插件）的 Linux VPS，一个域名。
 
+没有域名时，可使用专用 SSH 隧道 HTTPS 预览配置；本项目当前 VPS 的访问方式与验收记录见 `docs/vps-preview.md`。
+
 > 只部署**单实例**：应用用进程内锁保证写入串行，不要扩多副本，详见第 9 节。
+
+镜像固定 Node **24.22.1**、Caddy **2.11.7**；本地也使用 `.node-version` / `.nvmrc` 指定的 Node 版本。发布前运行 `pnpm check:release`，依次执行类型检查、构建、回归测试、独立生产包验证与 HIGH / CRITICAL 依赖审计。完整中危信息用 `pnpm audit:prod` 查看。
 
 ## 1. 域名解析
 
@@ -68,21 +72,26 @@ docker compose ps              # blog 应为 healthy，caddy 为 running
 docker compose logs -f caddy   # 看到证书签发成功即可访问
 ```
 
-Caddy 会等 `blog` 的 HEALTHCHECK 通过后再启动，避免启动瞬间 502。healthcheck 里包含 sharp 加载和 `/robots.txt` 请求，所以“blog 一直 unhealthy”通常说明镜像有问题（见下一节）。
+Caddy 会等 `blog` 的 HEALTHCHECK 通过后再启动，避免启动瞬间 502。healthcheck 加载 sharp 并请求 `/healthz`；后者检查数据根目录、文章与上传目录的读取和临时文件写入/重命名，以及已存在的设置/项目 JSON 是否可解析。失败返回不含路径或内容的 503，“blog 一直 unhealthy”需要同时检查镜像和挂载权限。
 
 打开 `https://你的域名/login` 登录后台。
+
+首次初始化的用户名为 `admin`，密码沿用 `BLOG_ADMIN_PASSWORD`。账号信息在 `data/accounts.json`，密码存为 scrypt 哈希，不是明文。迁移到多人后台时旧会话需要重新登录；初始化后请在「我的账号」改自己的密码，在「账号管理」创建、停用或重置协作者账号。编辑可管理文章、图片和评论，只有管理员能改账号和站点设置。
 
 ## 5. 上线后自检
 
 ```sh
 # sharp 的 Linux 原生依赖是否被正确打进镜像（P0-4）
 docker compose exec blog node -e "console.log(require('sharp').versions)"
+docker compose exec blog node -v                    # v24.22.1
+docker compose exec caddy caddy version             # v2.11.7
+docker compose exec blog node scripts/healthcheck.mjs
 
 # 上传一张图片后，确认由 Caddy 直出：响应里有 ETag / Last-Modified，且没有 Server 头
 curl -sI https://你的域名/uploads/刚上传的文件名.webp
 ```
 
-第二项如果响应头里没有 `ETag`，说明图片还在走 Node（Caddy 的 `file_server` 没命中），检查 `data/uploads` 的挂载与属主。sharp 自检失败则按 `docs/deploy-review.md` P0-4 在 `next.config.ts` 加 `outputFileTracingIncludes`。
+图片响应头里没有 `ETag`，说明图片还在走 Node（Caddy 的 `file_server` 没命中），检查 `data/uploads` 的挂载与属主。`next.config.ts` 已包含 pnpm 原生包布局的追踪兜底；sharp 自检失败时仍需查看容器日志与打包出的原生库，不能只以本地构建成功作验收。
 
 ## 6. 更新
 
@@ -98,6 +107,7 @@ docker compose up -d --build
 
 ```sh
 git add data/posts && git commit -m "content: 更新文章"
+git push                    # 仅 commit 仍是单机副本；私有仓库也需审查草稿内容
 ```
 
 如果 `git pull` 报 `data/posts` 冲突，说明本地和服务器改过同一篇，先合掉冲突再构建。
@@ -108,7 +118,7 @@ git add data/posts && git commit -m "content: 更新文章"
 sh deploy/backup.sh
 ```
 
-脚本把 `data/`（文章、评论、设置、图片，不含 `sessions.json` 登录态）打包到 `deploy/backups/`：先写 `.partial`，用 `tar -tzf` 校验可读后才改成正式文件名；有目录锁，cron 重叠会自动跳过；默认保留最近 14 份。
+脚本把 `data/`（文章、评论、设置、账号哈希、图片，不含 `sessions.json` 登录态）打包到 `deploy/backups/`：先写 `.partial`，用 `tar -tzf` 校验可读后才改成正式文件名；有目录锁，cron 重叠会自动跳过；默认保留最近 14 份。
 
 加进 crontab 每天 4 点跑（`crontab -e`）：
 
@@ -122,26 +132,35 @@ sh deploy/backup.sh
 0 4 * * * cd /opt/self_blog && BACKUP_KEEP=30 BACKUP_REMOTE=r2:blog-backup sh deploy/backup.sh
 ```
 
-`BACKUP_REMOTE` 需要先装 rclone 并 `rclone config`（对象存储或另一台机器都行）；设置了但没装 rclone 时会跳过并提示。`.env` 不在备份里（三个密钥），单独存到密码管理器，换机器时重新填。
+`BACKUP_REMOTE` 需要先装 rclone 并 `rclone config`（对象存储或另一台机器都行）。配置了远端但缺 rclone 或上传失败，脚本会非零退出，保留本地新备份且不清理历史，供 cron/监控识别失败。`BACKUP_KEEP` 必须为正整数；异地失败恢复后应检查磁盘占用。`.env` 不在备份里（三个密钥），单独存到密码管理器，换机器时重新填。
 
 上线第一周做一次**恢复演练**：
 
 ```sh
-# 1) 解包到临时目录，核对文章数
-mkdir -p /tmp/restore
-tar -xzf deploy/backups/data-YYYYmmdd-HHMMSS.tar.gz -C /tmp/restore
-ls /tmp/restore/data/posts/*.md | wc -l
+# 1) 在同一文件系统的独立目录解包；仅使用自己的可信备份
+cd /opt/self_blog
+restore_dir=$(mktemp -d ./deploy/restore-XXXXXX)
+tar -xzf deploy/backups/data-YYYYmmdd-HHMMSS.tar.gz -C "$restore_dir"
+test -d "$restore_dir/data/posts" && test -d "$restore_dir/data/uploads"
+find "$restore_dir/data" -type f | sort
+# 核对文件清单、正文和图片；需要一致时间点时，应短暂停写后创建备份。
 
-# 2) 真正恢复：先停容器，避免运行时写入覆盖解包内容
-cd /opt/self_blog && docker compose down
-tar -xzf deploy/backups/data-YYYYmmdd-HHMMSS.tar.gz -C .
+# 2) 确认备份正确后才真正替换。逐条执行，任一步失败即停下。
+docker compose down
+rollback_dir=$(mktemp -d ./deploy/pre-restore-XXXXXX)
+mv data "$rollback_dir/data"
+mv "$restore_dir/data" data
 chown -R 1001:1001 data
 docker compose up -d
+docker compose exec blog node scripts/healthcheck.mjs
+# 验收文章、评论、图片和登录后，再决定旧目录的保留时间。
 ```
+
+不要覆盖解包到正在使用的 `data/`：那会保留备份之后新增的文件和旧登录态。整目录替换保留回滚副本，并使恢复结果与备份一致；备份不含会话，恢复后需要重新登录。`deploy/restore-*`、`deploy/pre-restore-*` 含运行数据，应按备份管理，不提交到 Git。
 
 ## 8. 可用性监控
 
-用 UptimeRobot / healthchecks.io 探 `https://你的域名/robots.txt`：这是现成的动态路由，能同时验证 Node 进程和数据目录可读，异常时发邮件。也可以再探一次首页 `/`。
+外部探活使用 `https://你的域名/healthz`，期望 200 且 JSON 为 `{"status":"healthy"}`，异常时通过你配置的通知渠道提醒。该路由不缓存，并验证数据目录实际可用；`/robots.txt` 仅生成 SEO 规则，不能验证数据卷。也可以再探一次首页 `/`。
 
 ## 9. 运维备注
 
@@ -159,5 +178,6 @@ docker compose up -d
 - 证书签不下来：确认解析已生效（`ping 域名` 指向本机），且 80 端口没被其他程序占用。
 - 上传图片报权限错误：`data/uploads` 的属主不是 1001（被 Docker 以 root 建过目录），重新执行第 3 节的 `chown`。
 - 备份一直跳过：`deploy/backups/.lock` 目录残留（进程被 kill -9 过），`rm -rf deploy/backups/.lock` 后重试。
-- 怀疑密码泄露：改 `.env` 里的 `BLOG_ADMIN_PASSWORD`，再执行 `docker compose up -d`。要让所有已登录设备立刻下线，就同时更换 `BLOG_SESSION_SECRET`，或者在后台「设备」页退出其他设备。
+- 怀疑密码泄露：在「我的账号」修改自己的密码，或由管理员在「账号管理」重置目标账号。该账号所有旧会话会立即失效；改 `.env` 的 `BLOG_ADMIN_PASSWORD` 不会重置已经初始化的账号。更换 `BLOG_SESSION_SECRET` 则使所有账号的设备下线。
+- 账号数据与恢复：不要删除或公开 `data/accounts.json`，它包含用户名、角色和密码哈希。备份会包含该文件；恢复时需保留它，旧会话不应恢复。如果回退到不支持多人账号的旧镜像，必须同时撤销全部登录会话，避免旧版本忽略角色权限。
 - 应用端口 3000 只对 Caddy 可见，不要在 compose 里把它映射到宿主机，否则访客 IP 可被伪造，登录限流会失效。

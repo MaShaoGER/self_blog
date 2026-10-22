@@ -11,11 +11,13 @@ import {
   MessageSquare,
   MonitorSmartphone,
   SlidersHorizontal,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { StatusLine } from "@/components/ui/marks";
+import type { AccountRole } from "@/lib/account-types";
 
 type Item = { href: string; label: string; en: string; icon: LucideIcon };
 
@@ -24,7 +26,8 @@ const ITEMS: Item[] = [
   { href: "/admin/posts", label: "文章", en: "ENTRIES", icon: FileText },
   { href: "/admin/comments", label: "评论", en: "COMMENTS", icon: MessageSquare },
   { href: "/admin/media", label: "图库", en: "MEDIA", icon: Images },
-  { href: "/admin/devices", label: "设备", en: "DEVICES", icon: MonitorSmartphone },
+  { href: "/admin/accounts", label: "账号管理", en: "ACCOUNTS", icon: Users },
+  { href: "/admin/devices", label: "我的账号", en: "ACCOUNT", icon: MonitorSmartphone },
   { href: "/admin/settings", label: "设置", en: "SETTINGS", icon: SlidersHorizontal },
 ];
 
@@ -55,13 +58,18 @@ function Badge({ count, compact }: { count: number; compact?: boolean }) {
 export function AdminNav({
   pending,
   siteTitle,
+  accountRole,
+  accountName,
   logout,
 }: {
   pending: number;
   siteTitle: string;
+  accountRole: AccountRole;
+  accountName: string;
   logout: () => Promise<void>;
 }) {
   const pathname = usePathname();
+  const items = ITEMS.filter((item) => accountRole === "admin" || (item.href !== "/admin/accounts" && item.href !== "/admin/settings"));
   const badgeLabel = pending > 0 ? `，${pending} 条待审核` : "";
 
   return (
@@ -72,12 +80,12 @@ export function AdminNav({
           <Link href="/admin" className="display min-w-0 truncate text-[1rem] leading-none text-ink">
             {siteTitle}
           </Link>
-          <span className="mono mt-1.5 text-[0.625rem] tracking-[0.16em] text-faint uppercase">CONSOLE / ADMIN</span>
+          <span className="mono mt-1.5 truncate text-[0.625rem] tracking-[0.08em] text-faint">{accountName} / {accountRole === "admin" ? "管理员" : "编辑"}</span>
         </div>
 
         <nav aria-label="后台导航" className="flex-1 overflow-y-auto py-2">
           <ul>
-            {ITEMS.map(({ href, label, en, icon: Icon }) => {
+            {items.map(({ href, label, en, icon: Icon }) => {
               const active = isActive(pathname, href);
               const count = href === "/admin/comments" ? pending : 0;
               return (
@@ -157,7 +165,7 @@ export function AdminNav({
           <Link href="/admin" className="display min-w-0 truncate text-[0.9375rem] leading-none text-ink">
             {siteTitle}
           </Link>
-          <span className="mono shrink-0 text-[0.5625rem] tracking-[0.14em] text-faint uppercase">ADMIN</span>
+          <span className="mono shrink-0 text-[0.5625rem] tracking-[0.14em] text-faint">{accountRole === "admin" ? "管理员" : "编辑"}</span>
         </div>
         <div className="flex items-center gap-1 pr-1">
           <ThemeToggle className="mr-1" />
@@ -187,8 +195,8 @@ export function AdminNav({
         aria-label="后台导航"
         className="fixed inset-x-0 bottom-0 z-40 border-t border-line-strong bg-[color-mix(in_oklab,var(--paper)_96%,transparent)] pb-[env(safe-area-inset-bottom)] backdrop-blur-[2px] md:hidden"
       >
-        <ul className="grid grid-cols-6">
-          {ITEMS.map(({ href, label, icon: Icon }) => {
+        <ul className={cn("grid", accountRole === "admin" ? "grid-cols-7" : "grid-cols-5")}>
+          {items.map(({ href, label, icon: Icon }) => {
             const active = isActive(pathname, href);
             const count = href === "/admin/comments" ? pending : 0;
             return (

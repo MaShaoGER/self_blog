@@ -6,6 +6,9 @@ import { UPLOADS_DIR } from "./env";
 import { atomicWrite } from "./store";
 import type { UploadItem } from "./types";
 
+// SVG is not an accepted upload format; reject it before native metadata parsing.
+sharp.block({ operation: ["VipsForeignLoadSvg"] });
+
 export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 const MAX_EDGE = 2400;
 const ALLOWED_FORMATS = new Set(["jpeg", "png", "webp", "gif", "avif", "heif", "tiff"]);

@@ -15,6 +15,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function HomePage() {
   const [posts, s, projects] = await Promise.all([getLivePosts(), getSettings(), readProjects()]);
+  const h = s.homepage;
   // 首页只露前三项；没有数据时整块不渲染。
   const projectTeaser = projects.slice(0, 3);
   const featured = posts.find((p) => p.featured);
@@ -25,7 +26,7 @@ export default async function HomePage() {
   const words = posts.reduce((n, p) => n + p.wordCount, 0);
 
   return (
-    <div className="sheet">
+    <div className="sheet [&_p]:[overflow-wrap:anywhere] [&_h1]:[overflow-wrap:anywhere] [&_h2]:[overflow-wrap:anywhere] [&_dt]:[overflow-wrap:anywhere] [&_dd]:[overflow-wrap:anywhere] [&_aside_span]:[overflow-wrap:anywhere]">
       {/* 铭牌 */}
       <section
         aria-labelledby="masthead"
@@ -33,11 +34,11 @@ export default async function HomePage() {
       >
         <div className="min-w-0">
           <div className="mono mb-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.625rem] tracking-[0.14em] text-muted uppercase">
-            <NoMark prefix="EST." value="2026" className="text-faint" />
+            <NoMark prefix={h.establishedPrefix} value={h.establishedYear} className="min-w-0 max-w-full whitespace-normal [overflow-wrap:anywhere] text-faint" />
             <span aria-hidden className="text-faint">
               /
             </span>
-            <span>ARCHIVE · NOTES · CODE</span>
+            <span className="min-w-0 [overflow-wrap:anywhere]">{h.categoryLine}</span>
           </div>
 
           <h1 id="masthead" className="display text-[clamp(2.75rem,10vw,6rem)] leading-[0.9]">
@@ -45,21 +46,21 @@ export default async function HomePage() {
           </h1>
 
           <p className="mono mt-3 text-[0.6875rem] tracking-[0.2em] text-accent uppercase">
-            SELF_BLOG / {s.author}
+            {h.identityPrefix} / {s.author}
           </p>
 
           <p className="mt-5 max-w-[46ch] text-[1.0625rem] leading-relaxed text-ink-soft">{s.description}</p>
 
           <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
-            <Link href={latest ? `/posts/${latest.slug}` : "/archive"} className="keybtn keybtn-safety">
-              <span>阅读最新</span>
+            <Link href={latest ? `/posts/${latest.slug}` : "/archive"} className="keybtn keybtn-safety max-w-full">
+              <span className="min-w-0 [overflow-wrap:anywhere]">{h.latestLabel}</span>
               <span aria-hidden>→</span>
             </Link>
             <Link
               href="/archive"
-              className="mono text-[0.6875rem] tracking-[0.08em] text-muted uppercase underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent-ink hover:decoration-accent"
+              className="mono min-w-0 max-w-full [overflow-wrap:anywhere] text-[0.6875rem] tracking-[0.08em] text-muted uppercase underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent-ink hover:decoration-accent"
             >
-              全部 {String(posts.length).padStart(2, "0")} 篇
+              {h.archiveLabel} {String(posts.length).padStart(2, "0")} {h.archiveCountUnit}
             </Link>
           </div>
         </div>
@@ -67,28 +68,28 @@ export default async function HomePage() {
         {/* 状态块：金属面板 + 荧光屏。这是首页唯一的写实区域。 */}
         <aside className="min-w-0">
           <ScrewCorners className="metal p-4 pt-6 pb-5">
-            <SilkStrip className="mb-3">STATUS / CTL-01</SilkStrip>
+            <SilkStrip className="mb-3 max-w-full [overflow-wrap:anywhere]">{h.statusTitle}</SilkStrip>
 
             <GlowScreen className="px-3 py-2.5">
-              <div className="flex items-baseline justify-between">
-                <span className="text-[0.625rem] tracking-[0.18em]">SYS.ONLINE</span>
-                <span aria-hidden className="led led-green scale-[0.85]" />
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="min-w-0 text-[0.625rem] tracking-[0.18em]">{h.statusOnline}</span>
+                <span aria-hidden className="led led-green shrink-0 scale-[0.85]" />
               </div>
               <p className="mt-1 text-[1.375rem] leading-none tracking-[0.1em] tabular-nums">
                 {String(posts.length).padStart(2, "0")}
-                <span className="ml-1.5 text-[0.5625rem] tracking-[0.18em]">ENTRIES</span>
+                <span className="ml-1.5 text-[0.5625rem] tracking-[0.18em]">{h.statusEntries}</span>
               </p>
             </GlowScreen>
 
             <dl className="mt-3 space-y-1.5">
               {[
-                { k: "ARCHIVE", v: span },
-                { k: "WORDS", v: words.toLocaleString("en-US") },
-                { k: "UPDATED", v: lastUpdate ? `${lastUpdate.year}.${lastUpdate.month}.${lastUpdate.day}` : "—" },
+                { id: "archive", k: h.statusArchive, v: span },
+                { id: "words", k: h.statusWords, v: words.toLocaleString("en-US") },
+                { id: "updated", k: h.statusUpdated, v: lastUpdate ? `${lastUpdate.year}.${lastUpdate.month}.${lastUpdate.day}` : "—" },
               ].map((row) => (
-                <div key={row.k} className="flex items-baseline justify-between gap-3">
-                  <dt className="mono text-[0.625rem] tracking-[0.12em] uppercase opacity-70">{row.k}</dt>
-                  <dd className="mono text-[0.6875rem] tracking-[0.06em] tabular-nums">{row.v}</dd>
+                <div key={row.id} className="flex items-baseline justify-between gap-3">
+                  <dt className="mono min-w-0 text-[0.625rem] tracking-[0.12em] uppercase opacity-70">{row.k}</dt>
+                  <dd className="mono shrink-0 text-[0.6875rem] tracking-[0.06em] tabular-nums">{row.v}</dd>
                 </div>
               ))}
             </dl>
@@ -100,8 +101,8 @@ export default async function HomePage() {
             >
               <Knob angle={38} size={44} label="面板刻度，装饰性" />
               <div className="min-w-0 text-right">
-                <span className="mono block text-[0.625rem] tracking-[0.16em] uppercase opacity-70">REV.02</span>
-                <span className="mono block text-[0.625rem] tracking-[0.16em] uppercase opacity-50">SCALE 1:1</span>
+                <span className="mono block text-[0.625rem] tracking-[0.16em] uppercase opacity-70">{h.statusRevision}</span>
+                <span className="mono block text-[0.625rem] tracking-[0.16em] uppercase opacity-50">{h.statusScale}</span>
               </div>
             </div>
           </ScrewCorners>
@@ -109,8 +110,8 @@ export default async function HomePage() {
           <div className="mt-4">
             <Ruler className="text-line-strong" ticks={26} />
             <div className="mt-2 flex items-end justify-between gap-3">
-              <span className="mono text-[0.625rem] tracking-[0.14em] text-faint uppercase">SERIAL</span>
-              <Barcode value={`SELF_BLOG/${s.author}/${posts.length}`} className="h-6 w-24 text-ink/60" />
+              <span className="mono min-w-0 text-[0.625rem] tracking-[0.14em] text-faint uppercase">{h.statusSerial}</span>
+              <Barcode value={`${h.identityPrefix}/${s.author}/${posts.length}`} className="h-6 w-24 shrink-0 text-ink/60" />
             </div>
           </div>
         </aside>
@@ -122,8 +123,8 @@ export default async function HomePage() {
           <div className="grid gap-4 md:grid-cols-[9rem_minmax(0,1fr)] md:gap-x-8">
             <div className="flex items-center gap-2 md:pt-1">
               <span aria-hidden className="led led-signal shrink-0" />
-              <span id="featured-title" className="mono text-[0.625rem] leading-none tracking-[0.14em] text-signal uppercase">
-                FEATURED
+              <span id="featured-title" className="mono min-w-0 [overflow-wrap:anywhere] text-[0.625rem] leading-snug tracking-[0.14em] text-signal uppercase">
+                {h.featuredLabel}
               </span>
             </div>
             <div className="min-w-0">
@@ -153,7 +154,7 @@ export default async function HomePage() {
           <div className="grid gap-x-8 gap-y-2.5 md:grid-cols-[9rem_minmax(0,1fr)_auto] md:items-baseline">
             <h2 id="projects-teaser" className="mono text-[0.625rem] tracking-[0.14em] uppercase">
               <Link href="/projects" className="text-muted transition-colors hover:text-accent-ink">
-                PROJECTS <span aria-hidden className="text-faint">/</span> 项目
+                {h.projectsLabel}
               </Link>
             </h2>
 
@@ -170,9 +171,9 @@ export default async function HomePage() {
 
             <Link
               href="/projects"
-              className="mono shrink-0 justify-self-start text-[0.6875rem] tracking-[0.08em] text-muted uppercase underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent-ink hover:decoration-accent md:justify-self-end"
+              className="mono min-w-0 max-w-full [overflow-wrap:anywhere] justify-self-start text-[0.6875rem] tracking-[0.08em] text-muted uppercase underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent-ink hover:decoration-accent md:justify-self-end"
             >
-              全部 <span aria-hidden>→</span>
+              {h.projectsAllLabel} <span aria-hidden>→</span>
             </Link>
           </div>
         </section>
@@ -180,20 +181,20 @@ export default async function HomePage() {
 
       {/* 目录 */}
       <section aria-labelledby="index-title" className="wrap py-10 lg:py-12">
-        <div className="mb-6 flex items-end justify-between gap-6">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-6">
           <h2 id="index-title" className="mono text-[0.6875rem] tracking-[0.14em] text-muted uppercase">
-            INDEX / 目录
+            {h.indexLabel}
           </h2>
-          <span className="mono hidden text-[0.625rem] tracking-[0.08em] text-faint uppercase sm:block">
-            NO. · TITLE · DATE · CAT · MIN
+          <span className="mono min-w-0 max-w-full [overflow-wrap:anywhere] hidden text-[0.625rem] tracking-[0.08em] text-faint uppercase sm:block">
+            {h.columnLegend}
           </span>
         </div>
 
         {posts.length === 0 ? (
           <div className="border-t border-line-ink py-14">
-            <p className="display text-[1.5rem] text-ink">NO RECORDS</p>
+            <p className="display text-[1.5rem] text-ink">{h.emptyTitle}</p>
             <p className="mt-2 max-w-[52ch] text-muted">
-              还没有发布的文章。第一篇正在写；也可以先订阅 RSS，发布时会收到。
+              {h.emptyBody}
             </p>
           </div>
         ) : (

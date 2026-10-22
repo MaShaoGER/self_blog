@@ -12,8 +12,8 @@ export const metadata: Metadata = { title: "登录", robots: { index: false } };
  * 登录页 = 控制台：深色底、mono、版本号、状态灯。
  * 站内唯一常年深色的页面——进门的地方是机柜，不是前台。
  */
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
-  const [{ next }, session, settings] = await Promise.all([searchParams, getSession(), getSettings()]);
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; changed?: string }> }) {
+  const [{ next, changed }, session, settings] = await Promise.all([searchParams, getSession(), getSettings()]);
   if (session) redirect("/admin");
 
   return (
@@ -48,13 +48,15 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             </div>
 
             <p className="mono mt-1.5 text-[0.625rem] tracking-[0.14em] text-[#6b6862] uppercase">
-              {settings.author} / SINGLE ADMIN
+              {settings.author} / TEAM ACCESS
             </p>
 
             <h1 className="mt-7 text-[1.5rem] leading-tight text-[#efebe3]">回到书桌</h1>
             <p className="mt-2 text-[0.875rem] leading-relaxed text-[#a8a399]">
-              输入管理员密码。登录状态在这台设备上保留 30 天。
+              使用管理员分配的用户名和密码登录。登录状态在这台设备上保留 30 天。
             </p>
+
+            {changed === "1" && <p role="status" className="mt-3 text-[0.8125rem] text-[#8fd19a]">密码已更新，请重新登录。</p>}
 
             <LoginForm next={next ?? "/admin"} />
           </div>

@@ -1,6 +1,7 @@
 node_modules
 .next
 .git
+.deploy
 *.tsbuildinfo
 data
 .env
@@ -15,3 +16,6 @@ plugins
 playwright-report
 test-results
 deploy/backups
+deploy/restore-*
+deploy/pre-restore-*
+tests

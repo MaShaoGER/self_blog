@@ -4,8 +4,10 @@ import { useActionState, useEffect, useId, useState } from "react";
 import { saveSettingsAction, type SettingsState } from "@/app/admin/(shell)/settings/actions";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { HOMEPAGE_GROUPS, type HomePageSettings } from "@/lib/homepage-settings";
 
 type Values = {
+  homepage: HomePageSettings;
   title: string;
   tagline: string;
   description: string;
@@ -17,7 +19,7 @@ type Values = {
   commentsAutoApprove: boolean;
 };
 
-type TextKey = Exclude<keyof Values, "commentsAutoApprove">;
+type TextKey = Exclude<keyof Values, "commentsAutoApprove" | "homepage">;
 
 function Group({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -118,7 +120,7 @@ export function SettingsForm({ initial }: { initial: Values }) {
     <form action={formAction} noValidate={false}>
       <Group title="站点" hint="显示在浏览器标签、首页标题和搜索结果里。">
         {Text({ name: "title", label: "站点名称", required: true })}
-        {Text({ name: "tagline", label: "一句话介绍", hint: "显示在站点名称旁边或首页顶部。" })}
+        {Text({ name: "tagline", label: "一句话介绍", hint: "站点的简短介绍；首页铭牌下方的正文请编辑「站点描述」。" })}
         <div>
           <label htmlFor={`${uid}-description`} className="block text-[0.875rem] font-medium text-ink-soft">
             站点描述
@@ -127,6 +129,7 @@ export function SettingsForm({ initial }: { initial: Values }) {
             id={`${uid}-description`}
             name="description"
             rows={3}
+            maxLength={300}
             value={values.description}
             onChange={(e) => set("description", e.target.value)}
             aria-describedby={`${uid}-description-hint`}
@@ -134,10 +137,32 @@ export function SettingsForm({ initial }: { initial: Values }) {
             className="field mt-1.5 resize-y leading-relaxed"
           />
           <p id={`${uid}-description-hint`} className={cn("mt-1.5 text-[0.8125rem]", fieldError === "description" ? "text-accent-ink" : "text-muted")}>
-            {fieldError === "description" && state.status === "error" ? state.message : "用于搜索引擎和 RSS，一两句话即可。"}
+            {fieldError === "description" && state.status === "error" ? state.message : "显示在首页铭牌下方，也用于搜索引擎和 RSS，最多 300 字。"}
           </p>
         </div>
       </Group>
+
+      {HOMEPAGE_GROUPS.map((group) => (
+        <Group key={group.title} title={group.title} hint={group.hint}>
+          <div className="grid gap-5 sm:grid-cols-2">
+            {group.fields.map(({ key, label, optional }) => {
+              const name = `homepage.${key}` as const;
+              const id = `${uid}-${name}`;
+              const invalid = fieldError === name;
+              return (
+                <div key={key} className={key === "emptyBody" || key === "categoryLine" || key === "columnLegend" ? "sm:col-span-2" : undefined}>
+                  <label htmlFor={id} className="block text-[0.875rem] font-medium text-ink-soft">{label}</label>
+                  <input id={id} name={name} value={values.homepage[key]} maxLength={120} required={!optional}
+                    onChange={(e) => setValues((current) => ({ ...current, homepage: { ...current.homepage, [key]: e.target.value } }))}
+                    aria-invalid={invalid || undefined} aria-describedby={invalid ? `${id}-error` : undefined}
+                    className={cn("field mt-1.5 h-11", invalid && "border-accent")} />
+                  {invalid && state.status === "error" && <p id={`${id}-error`} className="mt-1.5 text-[0.8125rem] text-accent-ink">{state.message}</p>}
+                </div>
+              );
+            })}
+          </div>
+        </Group>
+      ))}
 
       <Group title="作者" hint="留空的联系方式不会在前台显示。">
         {Text({ name: "author", label: "作者名", required: true, autoComplete: "name" })}

@@ -1,0 +1,48 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  blog:
+    build:
+      context: .
+      args:
+        NPM_REGISTRY: "${NPM_REGISTRY:-https://registry.npmjs.org}"
+    image: self-blog-preview:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+    volumes:
+      - ./data:/app/data
+    expose:
+      - "3000"
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache
+    security_opt:
+      - no-new-privileges:true
+    init: true
+    logging: *default-logging
+
+  caddy:
+    image: caddy:2.11.7-alpine
+    restart: unless-stopped
+    depends_on:
+      blog:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:9443:443"
+    volumes:
+      - ./deploy/Caddyfile.preview:/etc/caddy/Caddyfile:ro
+      - ./data/uploads:/srv/uploads:ro
+      - preview_caddy_data:/data
+      - preview_caddy_config:/config
+    logging: *default-logging
+
+volumes:
+  preview_caddy_data:
+  preview_caddy_config:

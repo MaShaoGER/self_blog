@@ -7,8 +7,10 @@
 ## 技术栈（已定）
 - Next.js 16 App Router + React 19 + TypeScript + Tailwind CSS v4（无 UI 组件库）
 - 内容：`data/posts/*.md`（gray-matter frontmatter），不入数据库
-- 数据：`data/comments.json`、`data/settings.json`、`data/projects.json`；原子写文件
-- 认证：单管理员，密码在 `.env.local`（`BLOG_ADMIN_PASSWORD`），HMAC 签名 Cookie
+- 数据：`data/comments.json`、`data/settings.json`、`data/projects.json`、`data/accounts.json`；原子写文件
+- 认证：多人后台（管理员 / 编辑），scrypt 密码哈希与 HMAC 签名 Cookie；`BLOG_ADMIN_PASSWORD` 仅用于首次初始化 `admin` 账号
+- 权限：管理员管理账号和站点设置，编辑管理文章 / 图库 / 评论；设备和密码只允许管理自己的账号
+- 首页文案：`SiteSettings.homepage`，后台「设置」分组编辑；统计读数由文章自动生成
 - 图片：上传到 `data/uploads/`，经 `/uploads/[...path]` 路由输出（不用 public，prod 也能读到）
 - Markdown 渲染：react-markdown + remark-gfm + rehype-highlight/slug
 - 搜索：服务端扫描文章生成结果页（不引入搜索服务）

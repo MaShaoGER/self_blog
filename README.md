@@ -14,19 +14,30 @@ pnpm build       # 生产构建
 pnpm typecheck   # 类型检查
 ```
 
-第一次访问前台会看到空目录，在 `/login` 登录后进入后台发布文章。
+仓库包含用于排版演示的文章和项目。打开 `/login`，首次使用用户名 `admin` 与 `BLOG_ADMIN_PASSWORD` 登录；初始化后在后台修改密码。
+
+## 后台功能
+
+- **账号管理**：管理员创建、停用、重置协作者账号，区分管理员与编辑。
+- **我的账号**：修改密码、查看登录设备、退出自己的其他设备。
+- **文章与图库**：Markdown 编辑、草稿与定时发布、图片上传与 WebP 转换。
+- **站点设置**：编辑站名、作者、介绍、首页铭牌、按钮、栏目和状态面板文案；统计数字自动生成。
+
+完整权限和迁移说明见 [多人账号与首页文案](./docs/accounts-and-homepage.md)。
+
+发布前运行 `pnpm check:release`，包含类型检查、构建、功能测试、独立生产包检查与依赖审计。
 
 ## 部署
 
-见 [DEPLOY.md](./DEPLOY.md)。简述：Docker + Caddy 一键启动，域名解析后自动申请 HTTPS 证书。
+见 [DEPLOY.md](./DEPLOY.md)。Docker + Caddy 支持域名 HTTPS 部署；没有域名时可使用 [SSH 隧道预览](./docs/vps-preview.md)。
 
 ## 技术栈
 
 - **框架**：Next.js 16 App Router + React 19 + TypeScript
 - **样式**：Tailwind CSS v4（无 UI 组件库）
 - **内容**：Markdown 文件 + gray-matter frontmatter，存在 `data/posts/`
-- **数据**：评论、设置、会话存 JSON，原子写入
-- **认证**：HMAC 签名 Cookie，支持多设备登录
+- **数据**：评论、设置、账号和会话存 JSON，原子写入
+- **认证**：scrypt 密码哈希与 HMAC 签名 Cookie，支持角色权限和多设备登录
 - **图片**：上传到 `data/uploads/`，自动转 WebP 压缩并去除 EXIF
 - **Markdown 渲染**：react-markdown + remark-gfm + rehype-highlight/slug
 
@@ -54,6 +65,8 @@ lib/
 ├── comments.ts      # 评论管理（状态、审核、按 IP 限流）
 ├── settings.ts      # 站点设置、项目列表
 ├── auth.ts          # 会话管理（创建、验证、列出设备、移除会话）
+├── accounts.ts      # 账号、角色、密码哈希与版本撤销
+├── homepage-settings.ts # 首页文案的默认值与校验
 ├── crypto.ts        # HMAC 签名、令牌生成、密码校验
 ├── format.ts        # slug 生成、Markdown 去格式、阅读时长
 ├── request.ts       # 客户端 IP、UA 解析、IP 掩码、同源检查
@@ -66,6 +79,7 @@ data/                # 内容和数据（.gitignore 已排除敏感文件）
 ├── uploads/         # 上传的图片（按年月分目录）
 ├── comments.json    # 评论列表
 ├── sessions.json    # 登录会话
+├── accounts.json    # 账号与密码哈希（不提交）
 ├── settings.json    # 站点配置
 └── projects.json    # 项目展示
 
@@ -76,7 +90,7 @@ deploy/
 
 ## 设计取向
 
-暖纸色（#f4f0e8）+ 墨黑底深色模式，双主题切换。陶土橙（#bf4f28）点缀链接和主操作。Inter 为主，Fraunces 衬线用于年份数字和英文点缀。细分割线、大留白、克制的纸张颗粒，拒绝模板感。
+工业平面：纸白（#EFEBE3）、墨黑（#17171A）、薄荷（#D3E4D6）与安全橙（#E8531F），支持深浅主题。Archivo 标题、Inter 正文和 IBM Plex Mono 编号，使用结构线、参数表和少量写实交互控件。完整规范见 [设计参考](./docs/design-references/design-reference.md)。
 
 ## 许可
 
