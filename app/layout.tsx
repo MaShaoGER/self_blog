@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import "@fontsource-variable/archivo/wght.css";
 import "@fontsource-variable/inter";
 import "@fontsource/ibm-plex-mono/400.css";
@@ -30,11 +31,13 @@ export const viewport: Viewport = {
 // Runs before paint so the stored/system theme is applied without a flash.
 const themeScript = `(function(){try{var t=localStorage.getItem("theme");var d=t?t==="dark":matchMedia("(prefers-color-scheme: dark)").matches;var r=document.documentElement;if(d){r.classList.add("dark");r.style.colorScheme="dark"}}catch(e){}})()`;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // 由 proxy.ts 逐请求生成；Next 的内联引导脚本也会自动带上同一 nonce。
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
         <div className="relative z-[1] flex min-h-dvh flex-col">{children}</div>

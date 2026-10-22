@@ -4,9 +4,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 
-const NAV = [
+type NavItem = {
+  href: string;
+  label: string;
+  en: string;
+  match: (p: string) => boolean;
+  /** 窄屏放不下时藏起来，改由页脚承接 */
+  wideOnly?: boolean;
+};
+
+const NAV: NavItem[] = [
   { href: "/", label: "文章", en: "ARCHIVE", match: (p: string) => p === "/" || p.startsWith("/posts") },
   { href: "/archive", label: "归档", en: "INDEX", match: (p: string) => p.startsWith("/archive") },
+  { href: "/series", label: "系列", en: "SERIES", match: (p: string) => p.startsWith("/series"), wideOnly: true },
+  { href: "/projects", label: "项目", en: "PROJECTS", match: (p: string) => p.startsWith("/projects"), wideOnly: true },
   { href: "/tags", label: "标签", en: "TAGS", match: (p: string) => p.startsWith("/tags") },
   { href: "/about", label: "关于", en: "ABOUT", match: (p: string) => p.startsWith("/about") },
   { href: "/search", label: "搜索", en: "SEARCH", match: (p: string) => p.startsWith("/search") },
@@ -14,7 +25,8 @@ const NAV = [
 
 /**
  * 导航：中文主标签 + 英文 mono 型号。
- * 英文只在 lg 以上显示（空间够时作为铭牌补充），移动端只留中文，避免挤压截断。
+ * 英文只在 xl 以上显示（空间够时作为铭牌补充）；系列/项目在 md 以下交给页脚，
+ * 保证 390px 下不出现被截断或横向滚动的导航。
  */
 export function NavLinks() {
   const pathname = usePathname() ?? "/";
@@ -23,7 +35,7 @@ export function NavLinks() {
       {NAV.map((item) => {
         const active = item.match(pathname);
         return (
-          <li key={item.href} className="shrink-0">
+          <li key={item.href} className={cn("shrink-0", item.wideOnly && "hidden md:block")}>
             <Link
               href={item.href}
               aria-current={active ? "page" : undefined}

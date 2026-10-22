@@ -15,6 +15,13 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   // sharp ships native binaries; keep it out of the server bundle.
   serverExternalPackages: ["sharp"],
+  // ...but trace them into the standalone output for routes that import lib/uploads.
+  // On Windows @vercel/nft cannot run ldd, so the .so files are missing there.
+  outputFileTracingIncludes: {
+    "/api/upload": ["./node_modules/sharp/**/*", "./node_modules/@img/**/*"],
+    "/uploads/[...path]": ["./node_modules/sharp/**/*", "./node_modules/@img/**/*"],
+    "/admin/media": ["./node_modules/sharp/**/*", "./node_modules/@img/**/*"],
+  },
   experimental: {
     serverActions: {
       // Post bodies are sent through a Server Action; images go via /api/upload.

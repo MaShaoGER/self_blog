@@ -42,6 +42,7 @@ function parse(slug: string, raw: string): Post {
     tags: Array.isArray(data.tags) ? data.tags.map(String) : [],
     status,
     featured: Boolean(data.featured),
+    series: data.series ? String(data.series).trim() || undefined : undefined,
     content,
     ...readingStats(content),
   };
@@ -53,20 +54,45 @@ export function isLive(p: Pick<PostMeta, "status" | "date">, now = Date.now()): 
   return p.status === "scheduled" && new Date(p.date).getTime() <= now;
 }
 
-async function readAll(): Promise<Post[]> {
-  let files: string[];
+type PostsCache = { signature: string; posts: Post[] };
+
+// 模块级索引：请求不再逐篇读取、解析 markdown。签名覆盖每个文件的 mtime 与
+// 大小，因此应用外直接改文件也能被发现；savePost/deletePost 会主动清空。
+const g = globalThis as unknown as { __blogPostsCache?: PostsCache };
+
+async function scanPostsDir(): Promise<{ files: string[]; signature: string } | null> {
+  let names: string[];
   try {
-    files = await fs.readdir(POSTS_DIR);
+    names = await fs.readdir(POSTS_DIR);
   } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === "ENOENT") return [];
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
     throw err;
   }
+  const files = names.filter((f) => f.endsWith(".md") && isValidSlug(f.slice(0, -3))).sort();
+  const stats = await Promise.all(files.map((f) => fs.stat(path.join(POSTS_DIR, f)).catch(() => null)));
+  const signature = files
+    .map((f, i) => `${f}:${stats[i]?.mtimeMs ?? 0}:${stats[i]?.size ?? 0}`)
+    .join("|");
+  return { files, signature };
+}
+
+function clearPostsCache(): void {
+  g.__blogPostsCache = undefined;
+}
+
+/** 返回缓存数组，调用方须视为只读，不得原地修改。 */
+async function readAll(): Promise<Post[]> {
+  const scanned = await scanPostsDir();
+  if (!scanned) return [];
+  const cached = g.__blogPostsCache;
+  if (cached && cached.signature === scanned.signature) return cached.posts;
+
   const posts = await Promise.all(
-    files
-      .filter((f) => f.endsWith(".md") && isValidSlug(f.slice(0, -3)))
-      .map(async (f) => parse(f.slice(0, -3), await fs.readFile(path.join(POSTS_DIR, f), "utf8"))),
+    scanned.files.map(async (f) => parse(f.slice(0, -3), await fs.readFile(path.join(POSTS_DIR, f), "utf8"))),
   );
-  return posts.sort((a, b) => b.date.localeCompare(a.date));
+  const sorted = posts.sort((a, b) => b.date.localeCompare(a.date));
+  g.__blogPostsCache = { signature: scanned.signature, posts: sorted };
+  return sorted;
 }
 
 function meta({ content: _c, ...m }: Post): PostMeta {
@@ -85,12 +111,7 @@ export async function getLivePosts(): Promise<PostMeta[]> {
 
 export async function getPost(slug: string): Promise<Post | null> {
   if (!isValidSlug(slug)) return null;
-  try {
-    return parse(slug, await fs.readFile(fileFor(slug), "utf8"));
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
-    throw err;
-  }
+  return (await readAll()).find((p) => p.slug === slug) ?? null;
 }
 
 export async function getLivePost(slug: string): Promise<Post | null> {
@@ -102,6 +123,63 @@ export async function getAllTags(): Promise<{ tag: string; count: number }[]> {
   const counts = new Map<string, number>();
   for (const p of await getLivePosts()) for (const t of p.tags) counts.set(t, (counts.get(t) ?? 0) + 1);
   return [...counts].map(([tag, count]) => ({ tag, count })).sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
+}
+
+export type SeriesGroup = {
+  /** Series name as written in frontmatter. */
+  name: string;
+  /** Oldest first, so part numbers stay stable as new posts are added. */
+  posts: PostMeta[];
+};
+
+/** All series that currently have live posts; newest series first. */
+export async function getAllSeries(): Promise<SeriesGroup[]> {
+  const groups = new Map<string, PostMeta[]>();
+  for (const p of await getLivePosts()) {
+    if (!p.series) continue;
+    const list = groups.get(p.series);
+    if (list) list.push(p);
+    else groups.set(p.series, [p]);
+  }
+  return [...groups]
+    .map(([name, list]) => ({ name, posts: [...list].reverse() }))
+    .sort((a, b) => (b.posts.at(-1)?.date ?? "").localeCompare(a.posts.at(-1)?.date ?? ""));
+}
+
+/** One series, or null when the name has no live posts. */
+export async function getSeries(name: string): Promise<SeriesGroup | null> {
+  const posts = (await getLivePosts()).filter((p) => p.series === name).reverse();
+  return posts.length ? { name, posts } : null;
+}
+
+/**
+ * Related posts for the end of an article: most shared tags first, then recency.
+ * Falls back to the latest posts when nothing shares a tag, so the block is never empty.
+ */
+export async function getRelatedPosts(slug: string, limit = 3): Promise<PostMeta[]> {
+  const all = await getLivePosts();
+  const current = all.find((p) => p.slug === slug);
+  if (!current) return [];
+  const own = new Set(current.tags);
+
+  const scored = all
+    .filter((p) => p.slug !== slug)
+    .map((p) => ({ post: p, shared: p.tags.filter((t) => own.has(t)).length }))
+    .filter((x) => x.shared > 0)
+    .sort((a, b) => b.shared - a.shared || b.post.date.localeCompare(a.post.date))
+    .slice(0, limit)
+    .map((x) => x.post);
+
+  if (scored.length >= limit) return scored;
+
+  const picked = new Set(scored.map((p) => p.slug));
+  for (const p of all) {
+    if (scored.length >= limit) break;
+    if (p.slug === slug || picked.has(p.slug)) continue;
+    scored.push(p);
+    picked.add(p.slug);
+  }
+  return scored;
 }
 
 export async function searchPosts(q: string): Promise<(PostMeta & { snippet: string })[]> {
@@ -134,6 +212,7 @@ function serialise(input: PostInput, prev: Post | null): string {
   if (input.excerpt?.trim()) fm.excerpt = input.excerpt.trim();
   if (input.cover?.trim()) fm.cover = input.cover.trim();
   if (input.featured) fm.featured = true;
+  if (input.series?.trim()) fm.series = input.series.trim();
   return matter.stringify(input.content.endsWith("\n") ? input.content : `${input.content}\n`, fm);
 }
 
@@ -161,10 +240,14 @@ export async function savePost(input: PostInput, originalSlug?: string): Promise
     }
     await atomicWrite(fileFor(clean.slug), serialise(clean, prev));
     if (originalSlug && originalSlug !== clean.slug) await fs.rm(fileFor(originalSlug), { force: true });
+    clearPostsCache();
     return (await getPost(clean.slug))!;
   });
 }
 
 export async function deletePost(slug: string): Promise<void> {
-  await withLock("posts", () => fs.rm(fileFor(slug), { force: true }));
+  await withLock("posts", async () => {
+    await fs.rm(fileFor(slug), { force: true });
+    clearPostsCache();
+  });
 }

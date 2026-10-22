@@ -24,6 +24,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ slug:
         tags: post.tags,
         status: post.status,
         featured: post.featured ?? false,
+        series: post.series ?? "",
         content: post.content,
       }}
       originalSlug={post.slug}

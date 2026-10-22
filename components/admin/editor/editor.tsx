@@ -248,15 +248,15 @@ export function Editor({ initial, originalSlug: initialOriginal }: { initial: Po
           onClick={(e) => {
             if (dirty && !confirm("还有未保存的修改，确定离开吗？")) e.preventDefault();
           }}
-          className="inline-flex size-10 items-center justify-center rounded-full text-muted hover:bg-surface-2 hover:text-ink"
+          className="inline-flex size-10 items-center justify-center text-muted transition-colors hover:bg-surface-2 hover:text-ink"
           aria-label="返回文章列表"
         >
           <ArrowLeft className="size-[1.1rem]" strokeWidth={1.7} />
         </a>
         <span
           className={cn(
-            "shrink-0 whitespace-nowrap rounded-full border px-2 py-0.5 text-xs",
-            post.status === "draft" ? "border-line-strong text-muted" : "border-accent/40 text-accent-ink",
+            "mono shrink-0 border px-1.5 py-0.5 text-[0.625rem] tracking-[0.12em] whitespace-nowrap uppercase",
+            post.status === "draft" ? "border-line-strong text-muted" : "border-accent/50 text-accent-ink",
           )}
         >
           {STATUS_LABEL[post.status]}
@@ -265,7 +265,7 @@ export function Editor({ initial, originalSlug: initialOriginal }: { initial: Po
 
         <div className="ml-auto flex items-center gap-1.5">
           {/* Mobile write/preview switch */}
-          <div role="tablist" aria-label="编辑模式" className="flex rounded-full border border-line p-0.5 lg:hidden">
+          <div role="tablist" aria-label="编辑模式" className="flex border border-line p-0.5 lg:hidden">
             {(["write", "preview"] as const).map((t) => (
               <button
                 key={t}
@@ -273,7 +273,7 @@ export function Editor({ initial, originalSlug: initialOriginal }: { initial: Po
                 aria-selected={tab === t}
                 onClick={() => setTab(t)}
                 className={cn(
-                  "h-8 whitespace-nowrap rounded-full px-3 text-sm transition-colors",
+                  "h-8 px-3 text-sm whitespace-nowrap transition-colors",
                   tab === t ? "bg-ink text-bg" : "text-muted hover:text-ink",
                 )}
               >
@@ -287,8 +287,8 @@ export function Editor({ initial, originalSlug: initialOriginal }: { initial: Po
             aria-expanded={panelOpen}
             aria-controls="post-settings"
             className={cn(
-              "inline-flex size-10 items-center justify-center rounded-full text-muted hover:bg-surface-2 hover:text-ink",
-              panelOpen && "bg-surface-2 text-ink",
+              "inline-flex size-10 items-center justify-center transition-colors hover:bg-surface-2 hover:text-ink",
+              panelOpen ? "bg-surface-2 text-ink" : "text-muted",
             )}
             aria-label="文章设置"
           >
@@ -370,7 +370,7 @@ export function Editor({ initial, originalSlug: initialOriginal }: { initial: Po
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={run}
                   className={cn(
-                    "inline-flex size-10 shrink-0 items-center justify-center rounded-md text-muted hover:bg-surface-2 hover:text-ink",
+                    "inline-flex size-10 shrink-0 items-center justify-center text-muted transition-colors hover:bg-surface-2 hover:text-ink",
                     hideOnMobile && "max-sm:hidden",
                   )}
                 >
@@ -381,7 +381,7 @@ export function Editor({ initial, originalSlug: initialOriginal }: { initial: Po
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-md px-2.5 text-sm text-muted hover:bg-surface-2 hover:text-ink"
+                className="inline-flex h-10 shrink-0 items-center gap-1.5 px-2.5 text-sm text-muted transition-colors hover:bg-surface-2 hover:text-ink"
               >
                 <ImagePlus className="size-[1.05rem]" strokeWidth={1.7} />
                 插入图片
@@ -424,7 +424,7 @@ export function Editor({ initial, originalSlug: initialOriginal }: { initial: Po
               className="field-sizing-content min-h-[60vh] w-full resize-none bg-transparent font-mono text-[0.9375rem] leading-[1.85] text-ink-soft outline-none placeholder:text-faint"
             />
             {dragging && (
-              <div className="pointer-events-none absolute inset-3 grid place-items-center rounded-lg border-2 border-dashed border-accent/60 bg-accent-soft/60 text-sm text-accent-ink">
+              <div className="pointer-events-none absolute inset-3 grid place-items-center border-2 border-dashed border-accent/60 bg-accent-soft/60 text-sm text-accent-ink">
                 松开即可上传图片
               </div>
             )}
@@ -439,7 +439,7 @@ export function Editor({ initial, originalSlug: initialOriginal }: { initial: Po
           <div className="mx-auto max-w-[42rem] px-5 pb-32 pt-8 sm:px-10 sm:pt-12">
             {post.cover && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={post.cover} alt="" className="mb-8 aspect-[16/9] w-full rounded-md object-cover" />
+              <img src={post.cover} alt="" className="mb-8 aspect-[16/9] w-full border border-line object-cover" />
             )}
             <h1 className="text-balance text-[2rem] font-[680] leading-[1.2] tracking-[-0.025em]">
               {post.title || <span className="text-faint">未命名</span>}
@@ -460,14 +460,14 @@ export function Editor({ initial, originalSlug: initialOriginal }: { initial: Po
           id="post-settings"
           aria-label="文章设置"
           hidden={!panelOpen}
-          className="fixed inset-x-0 bottom-0 z-40 max-h-[85dvh] overflow-y-auto rounded-t-2xl border-t border-line bg-surface pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-[var(--shadow)] lg:sticky lg:top-14 lg:inset-auto lg:z-0 lg:h-[calc(100dvh-3.5rem)] lg:max-h-none lg:w-[20rem] lg:shrink-0 lg:rounded-none lg:border-l lg:border-t-0 lg:shadow-none"
+          className="fixed inset-x-0 bottom-0 z-40 max-h-[85dvh] overflow-y-auto border-t border-line-strong bg-surface pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-[var(--shadow)] lg:sticky lg:top-14 lg:inset-auto lg:z-0 lg:h-[calc(100dvh-3.5rem)] lg:max-h-none lg:w-[20rem] lg:shrink-0 lg:rounded-none lg:border-l lg:border-t-0 lg:shadow-none"
         >
           <div className="flex items-center justify-between px-5 pb-2 pt-4">
             <h2 className="text-[0.9375rem] font-[620]">文章设置</h2>
             <button
               type="button"
               onClick={() => setPanelOpen(false)}
-              className="inline-flex size-10 items-center justify-center rounded-full text-muted hover:bg-surface-2 hover:text-ink"
+              className="inline-flex size-10 items-center justify-center text-muted transition-colors hover:bg-surface-2 hover:text-ink"
               aria-label="关闭文章设置"
             >
               <X className="size-[1.05rem]" strokeWidth={1.7} />
@@ -503,6 +503,15 @@ export function Editor({ initial, originalSlug: initialOriginal }: { initial: Po
               <TagInput tags={post.tags} onChange={(tags) => update({ tags })} />
             </Field>
 
+            <Field label="系列" hint="留空表示不属于系列；同一系列的文章会按时间自动编号">
+              <input
+                className="field h-10 text-sm"
+                value={post.series ?? ""}
+                onChange={(e) => update({ series: e.target.value })}
+                placeholder="比如 版式实验"
+              />
+            </Field>
+
             <Field label="摘要" hint="留空会自动截取正文开头">
               <textarea
                 className="field min-h-24 resize-y py-2.5 text-sm leading-relaxed"
@@ -517,7 +526,7 @@ export function Editor({ initial, originalSlug: initialOriginal }: { initial: Po
               {post.cover ? (
                 <div className="mt-2">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={post.cover} alt="当前封面" className="aspect-[16/9] w-full rounded-md border border-line object-cover" />
+                  <img src={post.cover} alt="当前封面" className="aspect-[16/9] w-full border border-line-strong object-cover" />
                   <div className="mt-2 flex gap-2">
                     <button type="button" className="btn btn-ghost h-9 flex-1 text-sm" onClick={() => coverRef.current?.click()}>
                       更换
@@ -531,7 +540,7 @@ export function Editor({ initial, originalSlug: initialOriginal }: { initial: Po
                 <button
                   type="button"
                   onClick={() => coverRef.current?.click()}
-                  className="mt-2 flex aspect-[16/9] w-full items-center justify-center gap-2 rounded-md border border-dashed border-line-strong text-sm text-muted hover:border-accent/50 hover:text-ink"
+                  className="mt-2 flex aspect-[16/9] w-full items-center justify-center gap-2 border border-dashed border-line-strong text-sm text-muted transition-colors hover:border-accent/50 hover:text-ink"
                 >
                   <ImagePlus className="size-4" strokeWidth={1.7} />
                   上传封面
@@ -580,7 +589,7 @@ export function Editor({ initial, originalSlug: initialOriginal }: { initial: Po
 
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
         {notice && (
-          <p className="pointer-events-auto max-w-md rounded-full bg-ink px-4 py-2.5 text-sm text-bg shadow-[var(--shadow)]">{notice}</p>
+          <p className="pointer-events-auto max-w-md border border-line-strong bg-ink px-4 py-2.5 text-sm text-bg shadow-[var(--shadow)]">{notice}</p>
         )}
       </div>
     </div>
@@ -625,12 +634,12 @@ function TagInput({ tags, onChange }: { tags: string[]; onChange: (tags: string[
   return (
     <div className="field flex min-h-10 flex-wrap items-center gap-1.5 py-1.5">
       {tags.map((t) => (
-        <span key={t} className="inline-flex items-center gap-1 rounded-full bg-surface-2 py-0.5 pl-2.5 pr-1 text-xs text-ink-soft">
+        <span key={t} className="inline-flex items-center gap-1 border border-line-strong bg-surface-2 py-0.5 pr-1 pl-2 text-xs text-ink-soft">
           {t}
           <button
             type="button"
             onClick={() => onChange(tags.filter((x) => x !== t))}
-            className="inline-flex size-5 items-center justify-center rounded-full text-muted hover:bg-line hover:text-ink"
+            className="inline-flex size-5 items-center justify-center text-muted transition-colors hover:bg-line hover:text-ink"
             aria-label={`移除标签 ${t}`}
           >
             <X className="size-3" strokeWidth={2} />

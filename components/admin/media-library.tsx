@@ -115,7 +115,7 @@ export function MediaLibrary({ initial }: { initial: UploadItem[] }) {
       {/* 上传区：整页都可以拖放，这里是点选入口和拖放落点提示 */}
       <div
         className={cn(
-          "mt-6 flex flex-col items-start gap-4 rounded-lg border border-dashed px-4 py-5 transition-colors sm:flex-row sm:items-center sm:justify-between md:px-5",
+          "mt-6 flex flex-col items-start gap-4 border border-dashed px-4 py-5 transition-colors sm:flex-row sm:items-center sm:justify-between md:px-5",
           dragging ? "border-accent bg-accent-soft/60" : "border-line-strong",
         )}
       >
@@ -191,7 +191,7 @@ export function MediaLibrary({ initial }: { initial: UploadItem[] }) {
                   href={item.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="block aspect-[4/3] overflow-hidden rounded-md border border-line bg-surface-2"
+                  className="block aspect-[4/3] overflow-hidden border border-line-strong bg-surface-2"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element -- 已是压缩后的 WebP，直接输出 */}
                   <img
@@ -219,7 +219,7 @@ export function MediaLibrary({ initial }: { initial: UploadItem[] }) {
                       aria-label={`复制 ${name} 的 Markdown 代码`}
                       title="复制 Markdown 代码"
                       className={cn(
-                        "inline-flex size-11 cursor-pointer items-center justify-center rounded-md transition-colors hover:bg-surface-2 md:size-9",
+                        "inline-flex size-11 cursor-pointer items-center justify-center transition-colors hover:bg-surface-2 md:size-9",
                         isCopied ? "text-green" : "text-muted hover:text-ink",
                       )}
                     >
@@ -231,7 +231,7 @@ export function MediaLibrary({ initial }: { initial: UploadItem[] }) {
                     </button>
                     <ConfirmButton
                       aria-label={`删除图片 ${name}`}
-                      className="inline-flex size-11 cursor-pointer items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-2 hover:text-accent-ink md:size-9"
+                      className="inline-flex size-11 cursor-pointer items-center justify-center text-muted transition-colors hover:bg-surface-2 hover:text-accent-ink md:size-9"
                       title="删除这张图片？"
                       description={
                         <>

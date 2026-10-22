@@ -11,6 +11,8 @@ export type PostMeta = {
   tags: string[];
   status: PostStatus;
   featured?: boolean;
+  /** Optional series name. Posts sharing it form a numbered run, ordered by date. */
+  series?: string;
   readingTime: number;
   wordCount: number;
 };
@@ -29,6 +31,7 @@ export type PostInput = {
   tags: string[];
   status: PostStatus;
   featured?: boolean;
+  series?: string;
   content: string;
 };
 

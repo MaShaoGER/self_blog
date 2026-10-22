@@ -74,11 +74,11 @@ export default async function TagsPage() {
                     <span className="display block truncate text-[1.0625rem] leading-tight text-ink transition-colors group-hover:text-accent-ink md:text-[1.1875rem]">
                       {t.tag}
                     </span>
-                    {/* 1px 编码条：长度 = 该标签篇数占最大值的比例 */}
-                    <span aria-hidden className="mt-2 block h-px w-full bg-line">
+                    {/* 1px 编码条：长度 = 该标签篇数占最大值的比例。限宽避免读作标题下划线 */}
+                    <span aria-hidden className="mt-2 block h-px w-full max-w-[14rem] bg-line">
                       <span
                         className="block h-px bg-ink transition-colors group-hover:bg-accent"
-                        style={{ width: `${Math.max(6, Math.round((t.count / max) * 100))}%` }}
+                        style={{ width: `${Math.max(8, Math.round((t.count / max) * 100))}%` }}
                       />
                     </span>
                   </span>

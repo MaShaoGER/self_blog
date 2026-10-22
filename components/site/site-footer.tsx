@@ -39,6 +39,18 @@ export function SiteFooter({ title, author }: { title: string; author: string })
               <Link href="/archive" className="mono text-[0.6875rem] tracking-[0.08em] text-muted uppercase hover:text-accent-ink">
                 全部
               </Link>
+              <Link
+                href="/series"
+                className="mono text-[0.6875rem] tracking-[0.08em] text-muted uppercase hover:text-accent-ink md:hidden"
+              >
+                系列
+              </Link>
+              <Link
+                href="/projects"
+                className="mono text-[0.6875rem] tracking-[0.08em] text-muted uppercase hover:text-accent-ink md:hidden"
+              >
+                项目
+              </Link>
               <a href="/feed.xml" className="mono text-[0.6875rem] tracking-[0.08em] text-muted uppercase hover:text-accent-ink">
                 RSS
               </a>

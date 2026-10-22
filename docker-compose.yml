@@ -1,6 +1,17 @@
+# 日志封顶，避免默认 json-file 无限增长。
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   blog:
-    build: .
+    build:
+      context: .
+      # 国内构建在 .env 里设 NPM_REGISTRY 或传 --build-arg，默认官方源。
+      args:
+        NPM_REGISTRY: "${NPM_REGISTRY:-https://registry.npmjs.org}"
     image: self-blog:latest
     restart: unless-stopped
     env_file: .env
@@ -11,12 +22,23 @@ services:
     # Not published to the host: only Caddy can reach it, so X-Forwarded-For can be trusted.
     expose:
       - "3000"
+    # 根文件系统只读；/app/data 是可写挂载，/tmp 给 sharp 等临时文件，
+    # .next/cache 留一点内存盘，避免 Next 运行时想写缓存时遇到 EROFS。
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache
+    security_opt:
+      - no-new-privileges:true
+    init: true
+    logging: *default-logging
 
   caddy:
     image: caddy:2.10-alpine
     restart: unless-stopped
     depends_on:
-      - blog
+      blog:
+        condition: service_healthy
     ports:
       - "80:80"
       - "443:443"
@@ -25,8 +47,11 @@ services:
       DOMAIN: ${DOMAIN:?请在 .env 中设置 DOMAIN}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # 图片由 Caddy 直出；宿主机目录需先存在且属主 1001，否则 Docker 会以 root 创建。
+      - ./data/uploads:/srv/uploads:ro
       - caddy_data:/data
       - caddy_config:/config
+    logging: *default-logging
 
 volumes:
   caddy_data:

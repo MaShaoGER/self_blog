@@ -11,10 +11,31 @@
 		-Server
 	}
 
-	reverse_proxy blog:3000 {
-		# Overwrite rather than append, so clients can't spoof their IP.
-		header_up X-Forwarded-For {remote_host}
-		header_up X-Real-IP {remote_host}
+	# 图片由 Caddy 直出：compose 把 ./data/uploads 只读挂到 /srv/uploads，
+	# root 指到 /srv，才能让 /uploads/foo.webp 命中 /srv/uploads/foo.webp。
+	handle /uploads/* {
+		root * /srv
+		header Cache-Control "public, max-age=31536000, immutable"
+		header X-Content-Type-Options "nosniff"
+		route {
+			# 文件不存在时 pass_thru，回落到下面的 Node 路由（保留 404 等原有行为）。
+			file_server {
+				pass_thru
+			}
+			reverse_proxy blog:3000 {
+				# Overwrite rather than append, so clients can't spoof their IP.
+				header_up X-Forwarded-For {remote_host}
+				header_up X-Real-IP {remote_host}
+			}
+		}
+	}
+
+	handle {
+		reverse_proxy blog:3000 {
+			# Overwrite rather than append, so clients can't spoof their IP.
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Real-IP {remote_host}
+		}
 	}
 }
 

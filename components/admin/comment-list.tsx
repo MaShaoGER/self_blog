@@ -29,7 +29,7 @@ const DONE_TEXT: Record<CommentStatus, string> = {
 };
 
 const btn =
-  "inline-flex h-11 cursor-pointer items-center rounded-md px-3 text-[0.8125rem] transition-colors disabled:cursor-default disabled:opacity-50 md:h-9";
+  "inline-flex h-11 cursor-pointer items-center px-3 text-[0.8125rem] transition-colors disabled:cursor-default disabled:opacity-50 md:h-9";
 
 function safeUrl(u?: string) {
   if (!u) return null;

@@ -6,7 +6,9 @@ export default function NotFound() {
   const routes = [
     { href: "/", label: "首页", no: "01" },
     { href: "/archive", label: "归档", no: "02" },
-    { href: "/search", label: "搜索", no: "03" },
+    { href: "/series", label: "系列", no: "03" },
+    { href: "/projects", label: "项目", no: "04" },
+    { href: "/search", label: "搜索", no: "05" },
   ];
 
   return (

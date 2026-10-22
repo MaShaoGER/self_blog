@@ -73,8 +73,8 @@ export default async function AdminHome() {
           <span
             className={
               pending.length
-                ? "font-serif text-[2rem] leading-none tabular-nums text-accent"
-                : "font-serif text-[2rem] leading-none tabular-nums text-faint"
+                ? "display text-[2rem] leading-none tabular-nums text-accent"
+                : "display text-[2rem] leading-none tabular-nums text-faint"
             }
           >
             {pending.length}

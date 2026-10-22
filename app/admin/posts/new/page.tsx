@@ -16,6 +16,7 @@ export default function NewPostPage() {
         tags: [],
         status: "draft",
         featured: false,
+        series: "",
         content: "",
       }}
       originalSlug={null}

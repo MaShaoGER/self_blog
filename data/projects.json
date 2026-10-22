@@ -1,0 +1,26 @@
+[
+  {
+    "title": "版式刻度",
+    "description": "中文正文排版用的字号—行高标尺。按 4px 步进列出常用组合，预览后导出 CSS 变量，另附一张 A4 打印的校准页。",
+    "year": "2026",
+    "tags": ["排版", "CSS", "工具"],
+    "href": "https://github.com/linfang/type-scale",
+    "status": "活跃",
+    "featured": true
+  },
+  {
+    "title": "稿件检查",
+    "description": "发文章前扫一遍 Markdown：中英文之间补空格、标题层级跳号、图注缺失。命令行运行，规则写在配置文件里，可以逐条关掉。",
+    "year": "2025",
+    "tags": ["Node.js", "CLI", "写作"],
+    "href": "https://github.com/linfang/manuscript-lint",
+    "status": "进行中"
+  },
+  {
+    "title": "阅读队列",
+    "description": "手动维护的待读队列，存成 JSON，由静态页输出到一屏里。后来读得少了，就停在这里。",
+    "year": "2024",
+    "tags": ["静态站", "JSON", "小工具"],
+    "status": "归档"
+  }
+]

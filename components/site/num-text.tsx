@@ -1,7 +1,7 @@
 import { formatDate, formatDateShort } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
-/** Sets digit runs in Fraunces while the surrounding CJK stays in the sans stack. */
+/** Sets digit runs in the tabular display face while the surrounding CJK stays in the sans stack. */
 export function NumText({ text, className }: { text: string; className?: string }) {
   return (
     <span className={className}>

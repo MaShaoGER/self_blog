@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getLivePosts } from "@/lib/posts";
+import { readProjects } from "@/lib/projects";
 import { getSettings } from "@/lib/settings";
 import { PostIndex } from "@/components/site/post-index";
 import { Barcode, NoMark, Ruler } from "@/components/ui/marks";
@@ -13,7 +14,9 @@ export const dynamic = "force-dynamic";
  * 版式：站名铭牌（左）/ 状态块（右）→ 精选 → 目录参数表。
  */
 export default async function HomePage() {
-  const [posts, s] = await Promise.all([getLivePosts(), getSettings()]);
+  const [posts, s, projects] = await Promise.all([getLivePosts(), getSettings(), readProjects()]);
+  // 首页只露前三项；没有数据时整块不渲染。
+  const projectTeaser = projects.slice(0, 3);
   const featured = posts.find((p) => p.featured);
   const latest = posts[0];
   const years = posts.length ? [...new Set(posts.map((p) => dateParts(p.date).year))].sort() : [];
@@ -140,6 +143,37 @@ export default async function HomePage() {
                 <span className="tabular-nums">{featured.readingTime} MIN READ</span>
               </p>
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* 项目入口：一行参数表，不做卡片 */}
+      {projectTeaser.length > 0 && (
+        <section aria-labelledby="projects-teaser" className="wrap border-b border-line py-4 lg:py-5">
+          <div className="grid gap-x-8 gap-y-2.5 md:grid-cols-[9rem_minmax(0,1fr)_auto] md:items-baseline">
+            <h2 id="projects-teaser" className="mono text-[0.625rem] tracking-[0.14em] uppercase">
+              <Link href="/projects" className="text-muted transition-colors hover:text-accent-ink">
+                PROJECTS <span aria-hidden className="text-faint">/</span> 项目
+              </Link>
+            </h2>
+
+            <ul className="flex min-w-0 flex-wrap items-baseline gap-x-5 gap-y-1.5">
+              {projectTeaser.map((p) => (
+                <li key={`${p.title}-${p.year}`} className="flex min-w-0 items-baseline gap-1.5">
+                  <span className="display min-w-0 truncate text-[0.9375rem] leading-none text-ink">{p.title}</span>
+                  <span className="mono shrink-0 text-[0.625rem] tracking-[0.06em] text-faint tabular-nums">
+                    {p.year}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            <Link
+              href="/projects"
+              className="mono shrink-0 justify-self-start text-[0.6875rem] tracking-[0.08em] text-muted uppercase underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent-ink hover:decoration-accent md:justify-self-end"
+            >
+              全部 <span aria-hidden>→</span>
+            </Link>
           </div>
         </section>
       )}

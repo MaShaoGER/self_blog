@@ -1,6 +1,6 @@
 # HANDOFF · 交接文档（新对话从这里开始）
 
-更新时间：2026-10-18（前台改造已完成）
+更新时间：2026-10-18（前台改造 + 内容结构扩展已完成）
 用途：在新会话中继续 self_blog 的 UI 改造。本文档自包含，读完即可接手。
 
 ---
@@ -9,7 +9,7 @@
 
 > 先读 `AGENTS.md`、`docs/design-references/HANDOFF.md`、`docs/design-references/design-reference.md`。
 > 按其中的「工业设计平面 + 关键控件写实（80/20）」方向，继续 self_blog 的 UI 改造。
-> **前台与登录页已完成**，剩余重点是后台内容区（编辑器/列表/表单仍偏旧）。
+> **前台页面、登录页、后台侧栏与内容区均已完成**；剩余重点见「6. 待办」。
 > 约束：不新增 UI 组件库/重型依赖；每步 `pnpm typecheck`；移动端后台可发文；
 > 双主题与 `prefers-reduced-motion`；界面文案中文；设计细节按 `design-reference.md` 执行。
 
@@ -18,16 +18,19 @@
 ## 1. 项目现状
 
 - 技术栈：Next.js 16 App Router + React 19 + TypeScript + Tailwind CSS v4（无 UI 组件库）
-- **前台已完成重建**（工业平面 + 80/20 写实控件），验收截图见 `screenshots/01–11`：
-  - 首页（铭牌 + 状态块 + 参数表目录 + 精选）、文章页（手册式三栏：SPEC / 625px 正文 / TOC）、
-    归档、标签索引、标签页、搜索、关于、根级 404 + 组内 404
+- **前台已完成**（工业平面 + 80/20 写实控件）：
+  - 首页（铭牌 + 状态块 + 精选 + 项目入口 + 参数表目录）
+  - 文章页（手册式三栏：SPEC / 624px 正文 / TOC + 阅读进度；系列条 / 相关文章 / 相邻文章 / 修订表 / 评论写实控件）
+  - 归档、系列索引 `+ /series/[slug]`、项目页、标签索引、标签页、搜索、关于、根级 404 + 组内 404
+  - `loading.tsx`（档案骨架）/ `error.tsx`（FAULT 页）覆盖前台、后台与根级
   - 登录页 = 控制台（机柜黑、mono、版本号、LED、条码）
-  - 后台侧栏已改（`components/admin/admin-nav.tsx`），**内容区仍是旧样式**
+- **后台内容区已完成**（概览/文章/评论/图库/设备/设置 + 编辑器）；圆角胶囊与圆形按钮已按工业平面清理干净
 - 路由：`/api/upload`、`/uploads/[...path]`、`/feed.xml`、`sitemap`、`robots`
-- 字体依赖：**已移除 Fraunces**；现为 `@fontsource-variable/archivo`（标题）+ `@fontsource-variable/inter`（正文）+ `@fontsource/ibm-plex-mono`（标签/编号）
-- 数据：`data/posts/*.md` 有 6 篇种子文章（含长文 `grid-notes`，用于压测手册式排版）；
-  `data/uploads/2026/10/` 有 3 张本地生成的占位配图；`data/settings.json` 含演示作者信息
-- 结论：**前台已交付**，下一步做后台内容区。
+- 字体依赖：`@fontsource-variable/archivo`（标题）+ `@fontsource-variable/inter`（正文）+ `@fontsource/ibm-plex-mono`（标签/编号）。
+  **Fraunces 已从 package.json 移除**，不要再引入衬线。
+- 数据：`data/posts/*.md`（7 篇，含长文 `grid-notes` 压测手册排版）；`data/projects.json`（项目页数据，**已从 .gitignore 移出，随仓库分发**）；
+  `data/uploads/2026/10/` 3 张占位配图；`data/settings.json` 演示作者信息
+- 种子系列：`版式实验`（grid-notes / version-as-promise / order-from-entropy 三册）
 
 ---
 
@@ -58,16 +61,23 @@
 | 文章页评论区 | 金属面板 + 螺丝 + 网孔格栅 + 凹槽输入 + 键帽提交 | `14-comment-panel.png` |
 | 全站右上 | 主题拨杆（橡胶手柄） | 各页 header |
 | 登录页 | 整页控制台（机柜黑 + mono + 条码） | `11-login-1440.png` |
+| 代码块工具条 | 语言铭牌 + 复制键 + 成功亮绿灯 LED | `.tools/shots/final/code-copied-1440.png` |
+| 图片灯箱 | 机柜黑全屏 + 顶栏 mono 标签 + 底部图注 | `.tools/shots/final/lightbox-1440.png` |
+| 文章页阅读进度 | 1px 凹槽刻度 + 橙色进度段 + 游标 + mono 读数 | `.tools/shots/final/post-1440.png` |
 
 其余区域保持工业平面（纸白、1px 结构线、mono 编号），不再加控件。
 
-**已知 deviation**：文章页 TOC 放在右栏（规范写左栏），因 1440 下左栏方案右侧留白过大；左栏保留 SPEC。
+**已知 deviation**：文章页三栏布局在 xl（1280）以下退为两栏 —— 正文 624px + SPEC 192px 已占满 1024 宽度，
+右栏 TOC 会被挤到 48px（竖排一字一行）。因此 **TOC 与阅读进度在 xl 起才展开为常驻右栏**，
+1024–1279 与移动端改用正文上方的折叠目录（`TocMobile`），短文无 TOC 时进度条常驻正文上方。
 
 **材质注意事项**（踩过的坑）：
 - `repeating-conic-gradient` 才能画出多格刻度环，普通 `conic-gradient` 只画第一格。
 - 旋钮刻度环的 `mask` 必须放在独立伪元素上，直接放在容器上会裁掉旋钮本体。
 - 金属面板内部文字不要硬编码颜色，用 `currentColor`/`opacity` 继承 `.metal` 的 `--metal-text`，
   否则深色主题下会出现浅色面板配深色字的错配。
+- 站头含 tagline 实际高约 96px，sticky 偏移要用 `top-[6.5rem]`，`top-20`(80px) 会被站头压住。
+- 列表行的 1px 编码条要限宽（`max-w-[14rem]` / `[18rem]`），整行宽度会被读成标题下划线。
 
 ---
 
@@ -168,31 +178,42 @@
 
 ## 6. 待办 / 建议顺序
 
-**已完成（本轮）**
+**已完成（累计）**
 
 1. ✅ 全局 token / 字体替换（移除 Fraunces，接 Archivo + IBM Plex Mono）/ 噪点与网格底 / 双主题
 2. ✅ 前台首页（铭牌 + 状态块 + 参数表目录 + 精选 + 规格页脚）
-3. ✅ 文章页（手册式：SPEC 左栏 + 625px 正文 + TOC 右栏 + 章节编号 + 图注 + 修订表 + 评论写实控件）
+3. ✅ 文章页（手册式：SPEC 左栏 + 624px 正文 + TOC 右栏 + 章节编号 + 图注 + 修订表 + 评论写实控件）
 4. ✅ 归档 / 标签索引 / 标签页 / 搜索 / 404（含根级 404）
 5. ✅ 导航 / 页脚（编号与丝印语言）
 6. ✅ 写实控件组（主题拨杆、键帽按钮、凹槽输入框、LED、LCD 类、条码/刻度标记）
-7. 🔶 登录页已完成（控制台风格）；**后台仅侧栏完成，内容区待做**
-8. 🔶 验收部分完成：1440 / 390 双端、深色、无横向溢出、最小字号 10px、typecheck + build 通过
+7. ✅ 登录页（控制台风格）+ **后台全部六个页面与编辑器**
+8. ✅ **内容结构扩展（本轮）**：系列（`/series`、`/series/[slug]`、编辑器 series 字段）、
+   项目（`/projects`、`data/projects.json`、首页入口）、相关文章、文章页阅读进度
+9. ✅ **阅读层（本轮）**：代码块语言铭牌 + 复制键、图片灯箱、系列条
+10. ✅ **全站健壮性**：前台/后台/根级 `loading.tsx` + `error.tsx`、sitemap 收录系列与项目、
+    404 补新入口、导航（系列/项目，md 以下收进页脚）
+11. ✅ 验收：1440 / 1280 / 1024 / 768 / 390 五档 × 14 条路由无横向溢出；深浅主题；
+    `pnpm typecheck` 与 `pnpm build` 均通过
 
 **待办（下一步）**
 
-1. **后台内容区**（优先级最高）：概览 / 文章列表 / 评论 / 媒体 / 设备 / 设置六个页面，
-   以及 `components/admin/*`（`page-header`、`filter-tabs`、`post-row`、`comment-list`、
-   `media-library`、`settings-form`、`editor/*`）。方向：可读性优先，列表用参数表，
-   编辑器工具栏做成工具条，不做过度的拟物；沿用 `.field/.btn` 与语义 token。
-2. 768 / 1024 两档断点的细节复核（目前验证集中在 1440 与 390）。
-3. 键盘走查全站、`prefers-reduced-motion` 逐项确认。
-4. 200 篇文章的列表性能与图片懒加载。
-5. 打印样式（档案页 A4）。
-6. 中文正文行宽在 768–1024 之间的中间态（当前 625px 固定，窄屏依赖自然换行）。
+1. **分享层**（未做）：动态 OG 图（`next/og` 生成铭牌式封面，需自托管中文字体子集）、
+   JSON-LD（BlogPosting / Person / WebSite）、RSS 全文（当前只有摘要）。
+2. 键盘走查全站、`prefers-reduced-motion` 逐项确认（progress / 灯箱 / 复制已覆盖）。
+3. 200 篇文章的列表性能与图片懒加载。
+4. 打印样式（档案页 A4，`@media print` 目前只隐藏 `.no-print`）。
+5. 中文正文行宽在 768–1024 之间的中间态（当前 624px 固定，窄屏依赖自然换行）。
+6. `data/posts/111.md` 是作者自己的测试草稿（draft），勿删。
 
 每步之后 `pnpm typecheck`；UI 改动后用 `.tools/shot.py` 截图 + `--probe` 验证
 （`D:\project\self_blog`，`pnpm dev`，端口以实际监听为准）。
+
+**环境补充**：
+- `.tools/shot.py` 依赖 Python `websocket` 模块，系统 Python 没有；用工作区自带 Python 跑：
+  `C:\Users\admin\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe`
+- Playwright 装在系统 Python（`python -m playwright`），chromium 未装，用 `channel="msedge"` 走系统 Edge。
+- **`pnpm build` 前必须先停掉 `pnpm dev`**：dev server 会锁 `.next/dev-run.log`，导致
+  `EBUSY: resource busy or locked, unlink`。顺序：停 dev → 删 `.next` → build → 重启 dev。
 
 ---
 
@@ -211,7 +232,7 @@
 
 ## 8. 待用户确认
 
-- 写实控件比例维持 80/20 还是再加重/减轻？（当前落地：每页 1–3 个写实控件，集中在主题切换、主按钮、搜索框、评论表单）
-- 首页中英混排比例是否合适（当前：中文主标题 + 英文 mono 标签/编号）。
-- 后台内容区改造：是否与前台同样走「参数表 + 工具条」，还是更贴近常规 CMS 习惯。
-- `data/posts/` 里的 6 篇种子文章与 3 张占位配图是否保留（用于版式验证，可随时删除）。
+- 写实控件比例维持 80/20 还是再加重/减轻？（当前落地：每页 1–3 个写实控件，集中在主题切换、主按钮、搜索框、评论表单、代码块工具条）
+- 是否要做「分享层」（动态 OG 图 / JSON-LD / RSS 全文）—— 动态 OG 图需自托管中文字体子集，是唯一有额外成本的一项。
+- `data/posts/` 里的 7 篇种子文章与 3 张占位配图是否保留（用于版式验证，可随时删除）。
+- `data/projects.json` 里的 3 条示例项目是占位数据，是否换成真实项目。
