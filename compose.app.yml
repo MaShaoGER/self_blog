@@ -1,0 +1,35 @@
+# Keep this file beside docker-compose*.yml so Compose extends resolves paths at the project root.
+services:
+  blog:
+    build:
+      context: .
+      args:
+        NPM_REGISTRY: "${NPM_REGISTRY:-https://registry.npmjs.org}"
+    image: ${BLOG_IMAGE:-self-blog:latest}
+    restart: unless-stopped
+    env_file: ${BLOG_ENV_FILE:-.env}
+    environment:
+      NODE_ENV: production
+      BLOG_DATA_DIR: /app/data
+    volumes:
+      - ${BLOG_HOST_DATA_DIR:-../self_blog-data}:/app/data
+    expose:
+      - "3000"
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache
+    security_opt:
+      - no-new-privileges:true
+    init: true
+    healthcheck:
+      test: ["CMD", "node", "scripts/healthcheck.mjs"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

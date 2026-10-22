@@ -109,7 +109,7 @@ export default async function PostPage({ params }: Props) {
       <div className="mt-8 flex flex-col gap-y-8 lg:mt-12 lg:flex-row lg:items-start lg:gap-x-12 xl:gap-x-16">
         {/* 桌面左栏：参数表，避开含 tagline 的站头（实测约 96px） */}
         <aside className="hidden lg:block lg:w-48 lg:shrink-0">
-          <div className="sticky top-[6.5rem] pb-10">
+          <div className="sticky top-[calc(var(--site-header-height,96px)+0.5rem)] pb-10">
             <p className="mono mb-2 text-[0.6875rem] tracking-[0.18em] text-faint uppercase">SPEC</p>
             <SpecSheet post={post} />
           </div>
@@ -188,7 +188,7 @@ export default async function PostPage({ params }: Props) {
 
           <RelatedPosts posts={related} className="mt-16" />
 
-          <section id="comments" aria-labelledby="comments-title" className="mt-16 scroll-mt-24">
+          <section id="comments" aria-labelledby="comments-title" className="mt-16 scroll-mt-[calc(var(--site-header-height,96px)+1rem)]">
             <div className="flex items-baseline justify-between gap-4 border-b border-line-ink pb-2">
               <h2 id="comments-title" className="mono text-[0.6875rem] tracking-[0.14em] text-muted uppercase">
                 COMMENTS
@@ -208,10 +208,10 @@ export default async function PostPage({ params }: Props) {
 
         {/* 右栏：阅读进度 + 目录。三栏在 1024–1279 放不下（正文 624 + SPEC 192 已占满），
             该区间改用正文上方的折叠目录，xl 起才展开为常驻侧栏。
-            self-stretch 让 sticky 能在整行高度内跟随；站头含 tagline 实际约 96px，top-[6.5rem] 留呼吸位 */}
+            self-stretch 让 sticky 跟随整行；偏移随站头文字换行后的实际高度更新。 */}
         {showToc && (
           <aside className="hidden xl:block xl:min-w-0 xl:flex-1 xl:self-stretch">
-            <div className="sticky top-[6.5rem] max-h-[calc(100dvh-8.5rem)] overflow-y-auto pb-10">
+            <div className="sticky top-[calc(var(--site-header-height,96px)+0.5rem)] max-h-[calc(100dvh-var(--site-header-height,96px)-2rem)] overflow-y-auto pb-10">
               <ReadingProgress className="mb-5" />
               <Toc items={headings} />
             </div>

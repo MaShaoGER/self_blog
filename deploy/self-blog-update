@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+set -eu
+BLOG_DEPLOY_CONFIG=${BLOG_DEPLOY_CONFIG:-/etc/self_blog/deploy.env}
+[ -f "$BLOG_DEPLOY_CONFIG" ] || { echo '缺少部署配置，请先准备 /etc/self_blog/deploy.env。' >&2; exit 1; }
+set -a
+. "$BLOG_DEPLOY_CONFIG"
+set +a
+export BLOG_DEPLOY_CONFIG
+exec sh "${BLOG_REPO_DIR:?}/deploy/update.sh" "$@"

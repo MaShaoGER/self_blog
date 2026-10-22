@@ -4,6 +4,7 @@ node_modules
 .deploy
 *.tsbuildinfo
 data
+examples
 .env
 .env.*
 !.env.example

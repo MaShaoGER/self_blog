@@ -31,6 +31,7 @@
 /* 语义层：浅色（纸白） */
 :root {
   color-scheme: light;
+  --site-header-height: 96px;
 
   --paper: #efebe3;
   --mint: #d3e4d6;
@@ -1084,6 +1085,7 @@
 .article h4 {
   color: var(--ink);
   text-wrap: balance;
+  scroll-margin-top: calc(var(--site-header-height, 96px) + 1rem);
 }
 
 .article h1 {

@@ -53,3 +53,34 @@ test('optional homepage category copy can be cleared and required labels are tri
   assert.equal(value.homepage.categoryLine, '');
   assert.equal(value.homepage.latestLabel, '阅读最新');
 });
+
+test('legacy settings receive complete navigation/footer defaults and merge nested patches', async () => {
+  await writeFile(file, JSON.stringify({ title: '旧站', navigation: { archive: { label: '旧档案' } }, footer: { buildValue: '手写站点' } }));
+  const initial = await getSettings();
+  assert.equal(initial.navigation.archive.label, '旧档案');
+  assert.equal(initial.navigation.archive.en, 'INDEX');
+  assert.equal(initial.navigation.search.label, '搜索');
+  assert.equal(initial.footer.brandPrefix, 'SELF_BLOG');
+  await saveSettings({ navigation: { archive: { en: '' }, home: { label: '随笔' } }, footer: { description: ' 新的页脚说明 ' } });
+  await saveSettings({ title: '新站' });
+  const saved = await getSettings();
+  assert.equal(saved.navigation.archive.label, '旧档案');
+  assert.equal(saved.navigation.archive.en, '');
+  assert.equal(saved.navigation.home.label, '随笔');
+  assert.equal(saved.footer.description, '新的页脚说明');
+  assert.equal(saved.footer.buildValue, '手写站点');
+});
+
+test('malformed navigation and footer patches do not change the file', async () => {
+  await writeFile(file, JSON.stringify({ title: '原始标题' }));
+  const before = await readFile(file, 'utf8');
+  for (const patch of [
+    { navigation: null }, { navigation: [] }, { navigation: { archive: null } },
+    { navigation: { home: { label: '' } } }, { navigation: { home: { label: '长'.repeat(9) } } },
+    { navigation: { home: { en: 'a'.repeat(17) } } }, { navigation: { search: { label: 2 } } },
+    { navigation: { arbitrary: { label: '链接' } } }, { navigation: { home: { href: 'https://other.test' } } },
+    { footer: [] }, { footer: null }, { footer: { brandPrefix: '' } },
+    { footer: { buildValue: 'a'.repeat(101) } }, { footer: { manageLabel: 2 } },
+  ]) await assert.rejects(saveSettings(patch));
+  assert.equal(await readFile(file, 'utf8'), before);
+});

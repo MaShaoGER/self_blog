@@ -32,12 +32,8 @@ yarn-error.log*
 .vscode/
 .idea/
 
-# data — 文章正文入库，便于回溯与恢复；运行态数据（评论/会话/设置/图片）留在服务器
-data/uploads/
-data/comments.json
-data/sessions.json
-data/accounts.json
-data/settings.json
+# Runtime content stays outside source; legacy in-checkout data is private too.
+data/
 
 # deployment backups
 deploy/backups/

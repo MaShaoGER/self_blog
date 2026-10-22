@@ -1,62 +1,134 @@
 import path from "node:path";
+import { createHash, randomUUID } from "node:crypto";
 import { DATA_DIR } from "./env";
-import { readJson } from "./store";
+import { readJson, updateJson } from "./store";
 import type { Project } from "./types";
 
-// Server-only：直接读文件系统，不要在客户端组件里引用。
-
 const FILE = path.join(DATA_DIR, "projects.json");
-const EMPTY: Project[] = [];
-
 const STATUSES = ["活跃", "归档", "进行中"] as const;
+export type AdminProject = Project & { id: string };
+
+export class ProjectValidationError extends Error {
+  field: string;
+  constructor(field: string, message: string) {
+    super(message);
+    this.name = "ProjectValidationError";
+    this.field = field;
+  }
+}
+export class ProjectsDataError extends Error {
+  constructor() {
+    super("项目数据无法读取，请检查 projects.json 的格式后重试；现有文件未改动。");
+    this.name = "ProjectsDataError";
+  }
+}
 
 function text(v: unknown): string {
-  if (typeof v === "string") return v.trim();
-  if (typeof v === "number") return String(v);
-  return "";
+  return typeof v === "string" ? v.trim() : typeof v === "number" ? String(v) : "";
 }
-
-/** 只接受 http(s) 外链，避免把 JSON 里写错的地址整行渲染成坏链接。 */
 function externalUrl(v: unknown): string | undefined {
-  const url = text(v);
-  return /^https?:\/\//i.test(url) ? url : undefined;
+  const value = text(v);
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:" ? value : undefined;
+  } catch { return undefined; }
 }
-
-/** 逐字段收口：一条数据写坏了只丢这一条，不影响整页。 */
 function toProject(raw: unknown): Project | null {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
   const r = raw as Record<string, unknown>;
   const title = text(r.title);
   if (!title) return null;
-
   return {
-    title,
-    description: text(r.description),
-    year: text(r.year),
+    title, description: text(r.description), year: text(r.year),
     tags: Array.isArray(r.tags) ? r.tags.map(text).filter(Boolean) : [],
-    href: externalUrl(r.href),
-    demo: externalUrl(r.demo),
-    status: STATUSES.find((s) => s === r.status),
-    featured: r.featured === true,
+    href: externalUrl(r.href), demo: externalUrl(r.demo),
+    status: STATUSES.find(s => s === r.status), featured: r.featured === true,
   };
 }
+function sort<T extends Project>(items: T[]): T[] {
+  return items.sort((a, b) => b.year.localeCompare(a.year) || a.title.localeCompare(b.title));
+}
 
-/**
- * 项目索引。文件缺失、JSON 损坏或条目不合规时一律退化成空数组，
- * 页面按空态渲染，不因一份数据文件让整站报错。
- * 排序：年份从新到旧，同年按标题排（页面文案按此说明，改排序须同步改页头说明）。
- */
+/** Public pages tolerate damaged records; management refuses to rewrite them. */
 export async function readProjects(): Promise<Project[]> {
-  let raw: unknown;
   try {
-    raw = await readJson<unknown>(FILE, EMPTY);
-  } catch {
-    return [];
-  }
-  if (!Array.isArray(raw)) return [];
+    const raw = await readJson<unknown>(FILE, []);
+    return Array.isArray(raw) ? sort(raw.map(toProject).filter((p): p is Project => p !== null)) : [];
+  } catch { return []; }
+}
 
-  return raw
-    .map(toProject)
-    .filter((p): p is Project => p !== null)
-    .sort((a, b) => b.year.localeCompare(a.year) || a.title.localeCompare(b.title));
+function validate(input: unknown): Project {
+  if (!input || typeof input !== "object" || Array.isArray(input)) throw new ProjectValidationError("title", "项目内容格式不正确");
+  const value = input as Record<string, unknown>;
+  function scalar(key: string, label: string, max: number, optional = false): string {
+    const raw = value[key];
+    if (optional && raw === undefined) return "";
+    if (typeof raw !== "string") throw new ProjectValidationError(key, `${label}格式不正确`);
+    const result = raw.trim();
+    if (result.length > max) throw new ProjectValidationError(key, `${label}最多 ${max} 个字符`);
+    return result;
+  }
+  const title = scalar("title", "项目名称", 120);
+  if (!title) throw new ProjectValidationError("title", "请填写项目名称");
+  const description = scalar("description", "项目简介", 2000);
+  const year = scalar("year", "年份", 4);
+  if (!/^\d{4}$/.test(year)) throw new ProjectValidationError("year", "年份需为 4 位数字，如 2026");
+  if (!Array.isArray(value.tags) || value.tags.length > 12 || value.tags.some(tag => typeof tag !== "string" || !tag.trim() || tag.trim().length > 30)) {
+    throw new ProjectValidationError("tags", "最多填写 12 个标签，每个标签为 1–30 个字符");
+  }
+  const tags = [...new Set((value.tags as string[]).map(tag => tag.trim()))];
+  const href = scalar("href", "项目链接", 2048, true);
+  const demo = scalar("demo", "演示链接", 2048, true);
+  for (const [key, url] of [["href", href], ["demo", demo]]) {
+    if (url && !externalUrl(url)) throw new ProjectValidationError(key, "链接需为完整的 http:// 或 https:// 地址");
+  }
+  const status = scalar("status", "项目状态", 10, true);
+  if (status && !STATUSES.includes(status as typeof STATUSES[number])) throw new ProjectValidationError("status", "请选择有效的项目状态");
+  if (value.featured !== undefined && typeof value.featured !== "boolean") throw new ProjectValidationError("featured", "精选标记格式不正确");
+  return { title, description, year, tags, href: href || undefined, demo: demo || undefined, status: status as Project["status"] || undefined, featured: value.featured === true };
+}
+function adminProjects(raw: unknown): AdminProject[] {
+  if (!Array.isArray(raw)) throw new ProjectsDataError();
+  const ids = new Set<string>();
+  return raw.map((item, index) => {
+    try {
+      const value = validate(item);
+      const existing = (item as Record<string, unknown>).id;
+      if (existing !== undefined && (typeof existing !== "string" || !/^[a-zA-Z0-9_-]{1,100}$/.test(existing))) throw new ProjectsDataError();
+      const id = typeof existing === "string" ? existing : `legacy-${createHash("sha256").update(`${index}:${JSON.stringify(item)}`).digest("hex").slice(0, 24)}`;
+      if (ids.has(id)) throw new ProjectsDataError();
+      ids.add(id);
+      return { ...value, id };
+    } catch { throw new ProjectsDataError(); }
+  });
+}
+export async function listProjectsForAdmin(): Promise<AdminProject[]> {
+  try { return sort(adminProjects(await readJson<unknown>(FILE, []))); }
+  catch { throw new ProjectsDataError(); }
+}
+function mutate<T>(fn: (items: AdminProject[]) => T): Promise<T> {
+  return updateJson<unknown, T>(FILE, [], raw => {
+    const items = adminProjects(raw);
+    const result = fn(items);
+    return { value: items, result };
+  }).catch(error => {
+    if (error instanceof SyntaxError) throw new ProjectsDataError();
+    throw error;
+  });
+}
+function find(items: AdminProject[], id: string): number {
+  const index = items.findIndex(item => item.id === id);
+  if (index < 0) throw new ProjectValidationError("id", "项目已被删除，请刷新列表后重试");
+  return index;
+}
+export async function createProject(input: unknown): Promise<AdminProject> {
+  const value = validate(input);
+  return mutate(items => { const item = { ...value, id: randomUUID() }; items.push(item); return item; });
+}
+export async function updateProject(id: string, input: unknown): Promise<AdminProject> {
+  const value = validate(input);
+  return mutate(items => { const index = find(items, id); items[index] = { ...value, id }; return items[index]; });
+}
+export async function deleteProject(id: string): Promise<void> {
+  return mutate(items => { items.splice(find(items, id), 1); });
 }

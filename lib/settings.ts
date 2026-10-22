@@ -2,12 +2,15 @@ import path from "node:path";
 import { DATA_DIR } from "./env";
 import { readJson, updateJson } from "./store";
 import type { SiteSettings } from "./types";
-import { DEFAULT_HOMEPAGE, SettingsValidationError, validateHomepagePatch, type HomePageSettings } from "./homepage-settings";
+import { DEFAULT_HOMEPAGE, SettingsValidationError, validateHomepagePatch, type HomePageSettings } from "../shared/homepage-settings";
+import { DEFAULT_FOOTER, DEFAULT_NAVIGATION, mergeNavigation, validateFooterPatch, validateNavigationPatch, type NavigationPatch, type SiteFooterSettings } from "../shared/site-chrome";
 
 const FILE = path.join(DATA_DIR, "settings.json");
 
 export const DEFAULT_SETTINGS: SiteSettings = {
   homepage: DEFAULT_HOMEPAGE,
+  navigation: DEFAULT_NAVIGATION,
+  footer: DEFAULT_FOOTER,
   title: "纸上",
   tagline: "写给以后的自己",
   description: "一个人的写作与笔记。",
@@ -20,10 +23,10 @@ export async function getSettings(): Promise<SiteSettings> {
   return mergeSettings(await readJson<SettingsPatch>(FILE, {}));
 }
 
-export type SettingsPatch = Omit<Partial<SiteSettings>, "homepage"> & { homepage?: Partial<HomePageSettings> };
+export type SettingsPatch = Omit<Partial<SiteSettings>, "homepage" | "navigation" | "footer"> & { homepage?: Partial<HomePageSettings>; navigation?: NavigationPatch; footer?: Partial<SiteFooterSettings> };
 
 function mergeSettings(current: SettingsPatch, patch: SettingsPatch = {}): SiteSettings {
-  return { ...DEFAULT_SETTINGS, ...current, ...patch, homepage: { ...DEFAULT_HOMEPAGE, ...current.homepage, ...patch.homepage } };
+  return { ...DEFAULT_SETTINGS, ...current, ...patch, homepage: { ...DEFAULT_HOMEPAGE, ...current.homepage, ...patch.homepage }, navigation: mergeNavigation(current.navigation, patch.navigation), footer: { ...DEFAULT_FOOTER, ...current.footer, ...patch.footer } };
 }
 
 const TEXT_LIMITS = { title: 60, tagline: 120, description: 300, author: 60, avatar: 2000, email: 120, github: 200, x: 200, aboutMarkdown: 20000 } as const;
@@ -43,6 +46,8 @@ export async function saveSettings(patch: SettingsPatch): Promise<SiteSettings> 
   }
   if (Object.hasOwn(patch, "commentsAutoApprove") && typeof patch.commentsAutoApprove !== "boolean") throw new SettingsValidationError("commentsAutoApprove", "评论设置格式不正确");
   if (Object.hasOwn(patch, "homepage")) checked.homepage = validateHomepagePatch(patch.homepage);
+  if (Object.hasOwn(patch, "navigation")) checked.navigation = validateNavigationPatch(patch.navigation);
+  if (Object.hasOwn(patch, "footer")) checked.footer = validateFooterPatch(patch.footer);
   return updateJson<SettingsPatch, SiteSettings>(FILE, {}, (cur) => {
     const value = mergeSettings(cur, checked);
     return { value, result: value };

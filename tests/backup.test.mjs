@@ -30,7 +30,7 @@ async function fixture(t) {
 }
 function run(dir, env = {}) {
   return spawnSync(shell, ['deploy/backup.sh'], {
-    cwd: dir, encoding: 'utf8', env: { ...process.env, PATH: 'tools', BACKUP_DIR: 'deploy/backups', BACKUP_KEEP: '14', BACKUP_REMOTE: '', ...env },
+    cwd: dir, encoding: 'utf8', env: { ...process.env, PATH: 'tools', BLOG_HOST_DATA_DIR: 'data', BACKUP_DIR: 'deploy/backups', BACKUP_KEEP: '14', BACKUP_REMOTE: '', ...env },
   });
 }
 test('configured remote without rclone fails but preserves a valid local archive', async (t) => {
@@ -78,4 +78,19 @@ test('remote copy failure preserves older local archives instead of rotating the
   const names = await readdir(path.join(dir, 'deploy/backups'));
   assert.equal(names.length, 2);
   assert.equal(names.includes('data-20000101-000000.tar.gz'), true);
+});
+
+test('external data directory keeps the restore data prefix and excludes runtime secrets', async (t) => {
+  const dir = await fixture(t);
+  await mkdir(path.join(dir, 'external content/posts'), { recursive: true });
+  await writeFile(path.join(dir, 'external content/posts/external.md'), 'external content');
+  await writeFile(path.join(dir, 'external content/sessions.json'), 'private');
+  const result = run(dir, { BLOG_HOST_DATA_DIR: path.join(dir, 'external content').replaceAll('\\', '/') });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const names = await readdir(path.join(dir, 'deploy/backups'));
+  const archive = `deploy/backups/${names.find((name) => name.endsWith('.tar.gz'))}`;
+  const listing = spawnSync(shell, ['-c', 'tar -tzf "$1"', 'test', archive], { cwd: dir, encoding: 'utf8' });
+  assert.equal(listing.status, 0, listing.stderr);
+  assert.match(listing.stdout, /data\/posts\/external.md/);
+  assert.doesNotMatch(listing.stdout, /test\.md|sessions\.json/);
 });

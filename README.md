@@ -8,20 +8,22 @@
 pnpm install
 cp .env.example .env.local
 # 填写 BLOG_ADMIN_PASSWORD、BLOG_SESSION_SECRET（可用 openssl rand -base64 48 生成）
+pnpm data:init   # 创建源码外的运行目录；想使用演示内容可加 --demo
 
 pnpm dev         # http://localhost:3000
 pnpm build       # 生产构建
 pnpm typecheck   # 类型检查
 ```
 
-仓库包含用于排版演示的文章和项目。打开 `/login`，首次使用用户名 `admin` 与 `BLOG_ADMIN_PASSWORD` 登录；初始化后在后台修改密码。
+演示文章与项目位于 `examples/data/`。真实内容默认写入源码旁的 `../self_blog-data`，可通过 `BLOG_DATA_DIR` 指定。已有旧 `data/` 时运行 `pnpm data:migrate --from ./data`，复制校验后保留原目录。打开 `/login`，首次使用用户名 `admin` 与 `BLOG_ADMIN_PASSWORD` 登录。
 
 ## 后台功能
 
 - **账号管理**：管理员创建、停用、重置协作者账号，区分管理员与编辑。
 - **我的账号**：修改密码、查看登录设备、退出自己的其他设备。
 - **文章与图库**：Markdown 编辑、草稿与定时发布、图片上传与 WebP 转换。
-- **站点设置**：编辑站名、作者、介绍、首页铭牌、按钮、栏目和状态面板文案；统计数字自动生成。
+- **项目展示**：后台新增、编辑、删除项目，修改链接、标签和状态。
+- **站点设置**：编辑站名、作者、介绍、首页文案、全站导航与页脚；统计数字自动生成。
 
 完整权限和迁移说明见 [多人账号与首页文案](./docs/accounts-and-homepage.md)。
 
@@ -29,13 +31,15 @@ pnpm typecheck   # 类型检查
 
 ## 部署
 
-见 [DEPLOY.md](./DEPLOY.md)。Docker + Caddy 支持域名 HTTPS 部署；没有域名时可使用 [SSH 隧道预览](./docs/vps-preview.md)。
+见 [DEPLOY.md](./DEPLOY.md)。已有 Openresty/Nginx 时只运行一个博客应用容器；也可选择独立 Caddy HTTPS 或 [SSH 隧道预览](./docs/vps-preview.md)。应用配置集中在 `compose.app.yml`。
+
+配置一次后，代码更新手动运行 `self-blog-update`，回退运行 `self-blog-update --rollback`。脚本负责备份、拉取、构建和健康检查；没有后台自动部署或 GitHub Actions。后台保存文章、项目和文案直接生效。
 
 ## 技术栈
 
 - **框架**：Next.js 16 App Router + React 19 + TypeScript
 - **样式**：Tailwind CSS v4（无 UI 组件库）
-- **内容**：Markdown 文件 + gray-matter frontmatter，存在 `data/posts/`
+- **内容**：Markdown 文件 + gray-matter frontmatter，存在 `BLOG_DATA_DIR/posts/`
 - **数据**：评论、设置、账号和会话存 JSON，原子写入
 - **认证**：scrypt 密码哈希与 HMAC 签名 Cookie，支持角色权限和多设备登录
 - **图片**：上传到 `data/uploads/`，自动转 WebP 压缩并去除 EXIF
@@ -63,10 +67,10 @@ components/
 lib/
 ├── posts.ts         # 文章读写、解析、校验
 ├── comments.ts      # 评论管理（状态、审核、按 IP 限流）
-├── settings.ts      # 站点设置、项目列表
+├── settings.ts      # 站点、首页、导航与页脚设置
+├── projects.ts      # 项目展示的读写与校验
 ├── auth.ts          # 会话管理（创建、验证、列出设备、移除会话）
 ├── accounts.ts      # 账号、角色、密码哈希与版本撤销
-├── homepage-settings.ts # 首页文案的默认值与校验
 ├── crypto.ts        # HMAC 签名、令牌生成、密码校验
 ├── format.ts        # slug 生成、Markdown 去格式、阅读时长
 ├── request.ts       # 客户端 IP、UA 解析、IP 掩码、同源检查
@@ -74,7 +78,13 @@ lib/
 ├── env.ts           # 环境变量和目录常量
 └── types.ts         # 类型定义
 
-data/                # 内容和数据（.gitignore 已排除敏感文件）
+shared/              # 前后台共用的纯配置与校验
+├── homepage-settings.ts
+└── site-chrome.ts
+
+examples/data/       # 仓库里的演示内容
+
+../self_blog-data/   # 默认运行数据目录，位于源码外
 ├── posts/*.md       # Markdown 文章
 ├── uploads/         # 上传的图片（按年月分目录）
 ├── comments.json    # 评论列表
@@ -85,7 +95,11 @@ data/                # 内容和数据（.gitignore 已排除敏感文件）
 
 deploy/
 ├── Caddyfile        # 反向代理 + 自动 HTTPS
-└── backup.sh        # 备份脚本（打包 data/ 并保留最近 14 份）
+├── backup.sh        # 备份运行数据并保留最近 14 份
+├── update.sh        # 手动更新与回退
+└── self-blog-update # 安装到服务器的一次性入口
+
+compose.app.yml     # 统一应用配置，三个入口文件复用
 ```
 
 ## 设计取向

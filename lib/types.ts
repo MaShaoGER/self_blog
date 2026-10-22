@@ -1,4 +1,5 @@
-import type { HomePageSettings } from "./homepage-settings";
+import type { HomePageSettings } from "../shared/homepage-settings";
+import type { SiteNavigation, SiteFooterSettings } from "../shared/site-chrome";
 
 export type PostStatus = "draft" | "published" | "scheduled";
 
@@ -55,6 +56,7 @@ export type Comment = {
 export type PublicComment = Pick<Comment, "id" | "author" | "website" | "body" | "createdAt">;
 
 export type Project = {
+  id?: string;
   title: string;
   description: string;
   year: string;
@@ -67,6 +69,8 @@ export type Project = {
 
 export type SiteSettings = {
   homepage: HomePageSettings;
+  navigation: SiteNavigation;
+  footer: SiteFooterSettings;
   title: string;
   tagline: string;
   description: string;

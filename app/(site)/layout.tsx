@@ -12,11 +12,11 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       >
         跳到正文
       </a>
-      <SiteHeader title={s.title} tagline={s.tagline} />
+      <SiteHeader title={s.title} tagline={s.tagline} navigation={s.navigation} brandPrefix={s.footer.brandPrefix} />
       <main id="main" className="relative flex-1">
         {children}
       </main>
-      <SiteFooter title={s.title} author={s.author} />
+      <SiteFooter title={s.title} author={s.author} navigation={s.navigation} footer={s.footer} />
     </>
   );
 }

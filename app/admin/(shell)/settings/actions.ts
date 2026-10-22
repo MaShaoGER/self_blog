@@ -3,13 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { assertAdmin } from "@/lib/auth";
 import { saveSettings, type SettingsPatch } from "@/lib/settings";
-import { HOMEPAGE_GROUPS, SettingsValidationError } from "@/lib/homepage-settings";
+import { HOMEPAGE_GROUPS, SettingsValidationError } from "@/shared/homepage-settings";
+import { NAV_DESTINATIONS, FOOTER_FIELDS } from "@/shared/site-chrome";
 import type { SiteSettings } from "@/lib/types";
 
 export type SettingsState =
   | { status: "idle" }
   | { status: "saved"; savedAt: string }
-  | { status: "error"; message: string; field?: keyof SiteSettings | `homepage.${string}` };
+  | { status: "error"; message: string; field?: keyof SiteSettings | `homepage.${string}` | `navigation.${string}` | `footer.${string}` };
 
 const LIMITS = {
   title: 60,
@@ -58,12 +59,14 @@ export async function saveSettingsAction(_prev: SettingsState, form: FormData): 
     x: values.x || undefined,
     commentsAutoApprove: form.get("commentsAutoApprove") === "on",
     homepage: Object.fromEntries(HOMEPAGE_GROUPS.flatMap(({ fields }) => fields.map(({ key }) => [`${key}`, form.get(`homepage.${key}`)]))),
+    navigation: Object.fromEntries(NAV_DESTINATIONS.map(({ key }) => [key, { label: form.get(`navigation.${key}.label`), en: form.get(`navigation.${key}.en`) }])) as SettingsPatch["navigation"],
+    footer: Object.fromEntries(FOOTER_FIELDS.map(({ key }) => [key, form.get(`footer.${key}`)])) as SettingsPatch["footer"],
   };
 
   try {
     await saveSettings(patch);
   } catch (err) {
-    if (err instanceof SettingsValidationError) return { status: "error", field: err.field as keyof SiteSettings | `homepage.${string}`, message: err.message };
+    if (err instanceof SettingsValidationError) return { status: "error", field: err.field as Extract<SettingsState, { status: "error" }>["field"], message: err.message };
     console.error("save settings failed", err);
     return { status: "error", message: "保存失败，请稍后重试" };
   }

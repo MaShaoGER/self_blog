@@ -6,11 +6,12 @@
 
 ## 技术栈（已定）
 - Next.js 16 App Router + React 19 + TypeScript + Tailwind CSS v4（无 UI 组件库）
-- 内容：`data/posts/*.md`（gray-matter frontmatter），不入数据库
-- 数据：`data/comments.json`、`data/settings.json`、`data/projects.json`、`data/accounts.json`；原子写文件
+- 内容：`BLOG_DATA_DIR/posts/*.md`（gray-matter frontmatter），不入数据库；默认运行目录为源码旁的 `../self_blog-data`
+- 数据：运行目录内 comments/settings/projects/accounts JSON；原子写文件。仓库只保留 `examples/data` 演示内容
 - 认证：多人后台（管理员 / 编辑），scrypt 密码哈希与 HMAC 签名 Cookie；`BLOG_ADMIN_PASSWORD` 仅用于首次初始化 `admin` 账号
 - 权限：管理员管理账号和站点设置，编辑管理文章 / 图库 / 评论；设备和密码只允许管理自己的账号
 - 首页文案：`SiteSettings.homepage`，后台「设置」分组编辑；统计读数由文章自动生成
+- 全站文案：`SiteSettings.navigation` / `footer`，后台「设置」编辑；项目展示由 `/admin/projects` 管理，仅管理员可改
 - 图片：上传到 `data/uploads/`，经 `/uploads/[...path]` 路由输出（不用 public，prod 也能读到）
 - Markdown 渲染：react-markdown + remark-gfm + rehype-highlight/slug
 - 搜索：服务端扫描文章生成结果页（不引入搜索服务）
@@ -20,13 +21,17 @@
 pnpm dev        # http://localhost:3000
 pnpm build
 pnpm typecheck
+pnpm data:init  # 创建源码外的空运行目录；--demo 只用于空目录演示数据
 ```
 
 ## 目录约定
 - `app/(site)/` 前台，`app/admin/` 后台，`app/login/` 登录
 - `components/site/`、`components/ui/`、`components/admin/`
 - `lib/` 数据与工具（`cn.ts`/`format.ts` 可进客户端，其余 Node-only）
-- `data/` 内容与数据，`data/uploads/` 忽略提交
+- `shared/` 前后台共用的纯配置、类型与校验，不引用 Node 模块
+- `examples/data/` 演示内容；真实运行数据在源码外，遗留 `data/` 全部忽略提交
+- `compose.app.yml` 统一应用配置；HTTPS / preview / gateway 三个入口文件复用它
+- 手动部署用 `self-blog-update`；私有配置、数据、状态、备份分别在 `/etc/self_blog` 和 `/srv/self_blog`，不入 Git
 - `.agents/skills/` 项目级技能（frontend-design、web-design-guidelines、webapp-testing）
 - `docs/design-references/` 设计参考、设计板、参考素材与交接文档（`HANDOFF.md`）
 

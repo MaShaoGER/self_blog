@@ -4,10 +4,13 @@ import { useActionState, useEffect, useId, useState } from "react";
 import { saveSettingsAction, type SettingsState } from "@/app/admin/(shell)/settings/actions";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/cn";
-import { HOMEPAGE_GROUPS, type HomePageSettings } from "@/lib/homepage-settings";
+import { HOMEPAGE_GROUPS, type HomePageSettings } from "@/shared/homepage-settings";
+import { NAV_DESTINATIONS, FOOTER_FIELDS, type SiteNavigation, type SiteFooterSettings } from "@/shared/site-chrome";
 
 type Values = {
   homepage: HomePageSettings;
+  navigation: SiteNavigation;
+  footer: SiteFooterSettings;
   title: string;
   tagline: string;
   description: string;
@@ -19,7 +22,7 @@ type Values = {
   commentsAutoApprove: boolean;
 };
 
-type TextKey = Exclude<keyof Values, "commentsAutoApprove" | "homepage">;
+type TextKey = Exclude<keyof Values, "commentsAutoApprove" | "homepage" | "navigation" | "footer">;
 
 function Group({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -163,6 +166,45 @@ export function SettingsForm({ initial }: { initial: Values }) {
           </div>
         </Group>
       ))}
+
+      <Group title="全站 · 导航" hint="固定入口，仅修改显示文字。中文最多 8 字；英文可留空，最多 16 字。页脚同步使用中文名称。">
+        <div className="space-y-4">
+          {NAV_DESTINATIONS.map(({ key, title, href }) => (
+            <fieldset key={key} className="grid min-w-0 grid-cols-2 gap-3 border-t border-line pt-3">
+              <legend className="text-[0.8125rem] text-muted">{title}入口 <span className="mono">{href}</span></legend>
+              {(["label", "en"] as const).map((part) => {
+                const name = `navigation.${key}.${part}` as const;
+                const id = `${uid}-${name}`;
+                const invalid = fieldError === name;
+                return <div key={part} className="min-w-0">
+                  <label htmlFor={id} className="text-[0.8125rem] font-medium text-ink-soft">{title} · {part === "label" ? "中文名称" : "英文辅助文字"}</label>
+                  <input id={id} name={name} value={values.navigation[key][part]} maxLength={part === "label" ? 8 : 16} required={part === "label"}
+                    onChange={(e) => setValues((current) => ({ ...current, navigation: { ...current.navigation, [key]: { ...current.navigation[key], [part]: e.target.value } } }))}
+                    aria-invalid={invalid || undefined} aria-describedby={invalid ? `${id}-error` : undefined} className={cn("field mt-1.5 h-11", invalid && "border-accent")} />
+                  {invalid && state.status === "error" && <p id={`${id}-error`} className="mt-1 text-[0.8125rem] text-accent-ink">{state.message}</p>}
+                </div>;
+              })}
+            </fieldset>
+          ))}
+        </div>
+      </Group>
+
+      <Group title="全站 · 页脚" hint="站名与作者沿用站点信息；版权年份自动更新。简短说明可留空。">
+        <div className="grid gap-5 sm:grid-cols-2">
+          {FOOTER_FIELDS.map(({ key, label, max, optional }) => {
+            const name = `footer.${key}` as const;
+            const id = `${uid}-${name}`;
+            const invalid = fieldError === name;
+            return <div key={key} className={key === "description" ? "sm:col-span-2" : undefined}>
+              <label htmlFor={id} className="text-[0.875rem] font-medium text-ink-soft">页脚 · {label}</label>
+              <input id={id} name={name} value={values.footer[key]} maxLength={max} required={!optional}
+                onChange={(e) => setValues((current) => ({ ...current, footer: { ...current.footer, [key]: e.target.value } }))}
+                aria-invalid={invalid || undefined} aria-describedby={invalid ? `${id}-error` : undefined} className={cn("field mt-1.5 h-11", invalid && "border-accent")} />
+              {invalid && state.status === "error" && <p id={`${id}-error`} className="mt-1 text-[0.8125rem] text-accent-ink">{state.message}</p>}
+            </div>;
+          })}
+        </div>
+      </Group>
 
       <Group title="作者" hint="留空的联系方式不会在前台显示。">
         {Text({ name: "author", label: "作者名", required: true, autoComplete: "name" })}

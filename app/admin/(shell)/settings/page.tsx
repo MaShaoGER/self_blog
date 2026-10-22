@@ -12,11 +12,13 @@ export default async function SettingsPage() {
   const s = await getSettings();
   return (
     <AdminPage>
-      <PageHeader title="设置" description="站点信息、首页文案和评论规则。保存后前台立即生效。" />
+      <PageHeader title="设置" description="站点信息、首页文案、导航页脚和评论规则。保存后前台立即生效。" />
       <SettingsForm
         initial={{
           title: s.title,
           homepage: s.homepage,
+          navigation: s.navigation,
+          footer: s.footer,
           tagline: s.tagline,
           description: s.description,
           author: s.author,

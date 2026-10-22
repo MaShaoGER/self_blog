@@ -1,8 +1,9 @@
 import path from "node:path";
+import { resolveDataDir } from "./data-path.mjs";
 
 // Runtime data lives outside the build; tell Turbopack not to trace it into the bundle.
 export const DATA_DIR = path.resolve(
-  /*turbopackIgnore: true*/ process.env.BLOG_DATA_DIR ?? path.join(process.cwd(), "data"),
+  /*turbopackIgnore: true*/ resolveDataDir(),
 );
 export const POSTS_DIR = path.join(DATA_DIR, "posts");
 export const UPLOADS_DIR = path.join(DATA_DIR, "uploads");

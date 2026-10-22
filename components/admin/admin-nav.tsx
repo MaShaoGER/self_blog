@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   ArrowUpRight,
   FileText,
+  FolderOpen,
   Images,
   LayoutGrid,
   LogOut,
@@ -19,16 +20,17 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { StatusLine } from "@/components/ui/marks";
 import type { AccountRole } from "@/lib/account-types";
 
-type Item = { href: string; label: string; en: string; icon: LucideIcon };
+type Item = { href: string; label: string; en: string; icon: LucideIcon; adminOnly?: boolean };
 
 const ITEMS: Item[] = [
   { href: "/admin", label: "概览", en: "OVERVIEW", icon: LayoutGrid },
   { href: "/admin/posts", label: "文章", en: "ENTRIES", icon: FileText },
   { href: "/admin/comments", label: "评论", en: "COMMENTS", icon: MessageSquare },
   { href: "/admin/media", label: "图库", en: "MEDIA", icon: Images },
-  { href: "/admin/accounts", label: "账号管理", en: "ACCOUNTS", icon: Users },
+  { href: "/admin/projects", label: "项目", en: "PROJECTS", icon: FolderOpen, adminOnly: true },
+  { href: "/admin/accounts", label: "账号管理", en: "ACCOUNTS", icon: Users, adminOnly: true },
   { href: "/admin/devices", label: "我的账号", en: "ACCOUNT", icon: MonitorSmartphone },
-  { href: "/admin/settings", label: "设置", en: "SETTINGS", icon: SlidersHorizontal },
+  { href: "/admin/settings", label: "设置", en: "SETTINGS", icon: SlidersHorizontal, adminOnly: true },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -69,7 +71,7 @@ export function AdminNav({
   logout: () => Promise<void>;
 }) {
   const pathname = usePathname();
-  const items = ITEMS.filter((item) => accountRole === "admin" || (item.href !== "/admin/accounts" && item.href !== "/admin/settings"));
+  const items = ITEMS.filter((item) => !item.adminOnly || accountRole === "admin");
   const badgeLabel = pending > 0 ? `，${pending} 条待审核` : "";
 
   return (
@@ -195,7 +197,7 @@ export function AdminNav({
         aria-label="后台导航"
         className="fixed inset-x-0 bottom-0 z-40 border-t border-line-strong bg-[color-mix(in_oklab,var(--paper)_96%,transparent)] pb-[env(safe-area-inset-bottom)] backdrop-blur-[2px] md:hidden"
       >
-        <ul className={cn("grid", accountRole === "admin" ? "grid-cols-7" : "grid-cols-5")}>
+        <ul className="grid" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
           {items.map(({ href, label, icon: Icon }) => {
             const active = isActive(pathname, href);
             const count = href === "/admin/comments" ? pending : 0;

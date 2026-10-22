@@ -1,0 +1,7 @@
+services:
+  blog:
+    extends:
+      file: ./compose.app.yml
+      service: blog
+    ports:
+      - "127.0.0.1:${BLOG_APP_PORT:-33030}:3000"
