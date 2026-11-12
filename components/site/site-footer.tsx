@@ -38,11 +38,11 @@ export function SiteFooter({ title, author, navigation, footer }: { title: strin
 
           <div className="flex min-w-0 items-end gap-6">
             <nav aria-label="页脚导航" className="flex flex-wrap gap-x-4 gap-y-3">
-              {NAV_DESTINATIONS.map(({ key, href }) => <Link key={key} href={href} className="mono text-[0.6875rem] tracking-[0.08em] text-muted uppercase hover:text-accent-ink">{navigation[key].label}</Link>)}
-              <a href="/feed.xml" className="mono text-[0.6875rem] tracking-[0.08em] text-muted uppercase hover:text-accent-ink">
+              {NAV_DESTINATIONS.map(({ key, href }) => <Link key={key} href={href} className="link-draw mono text-[0.6875rem] tracking-[0.08em] text-muted uppercase hover:text-accent-ink">{navigation[key].label}</Link>)}
+              <a href="/feed.xml" className="link-draw mono text-[0.6875rem] tracking-[0.08em] text-muted uppercase hover:text-accent-ink">
                 {footer.subscriptionLabel}
               </a>
-              <Link href="/login" className="mono text-[0.6875rem] tracking-[0.08em] text-muted uppercase hover:text-accent-ink">
+              <Link href="/login" className="link-draw mono text-[0.6875rem] tracking-[0.08em] text-muted uppercase hover:text-accent-ink">
                 {footer.manageLabel}
               </Link>
             </nav>

@@ -18,7 +18,7 @@ export default async function TagsPage() {
 
   return (
     <div className="sheet">
-      <header className="wrap border-b border-line-ink pt-10 pb-8 lg:pt-14 lg:pb-10">
+      <header className="page-reveal wrap border-b border-line-ink pt-10 pb-8 lg:pt-14 lg:pb-10">
         <p className="mono text-[0.6875rem] tracking-[0.14em] text-muted uppercase">
           TAGS <span aria-hidden className="text-faint">/</span> 索引
         </p>
@@ -59,14 +59,14 @@ export default async function TagsPage() {
             </p>
           </div>
         ) : (
-          <ul className="grid border-t border-line-ink sm:grid-cols-2 sm:gap-x-10 lg:grid-cols-3">
+          <ul className="list-stagger grid border-t border-line-ink sm:grid-cols-2 sm:gap-x-10 lg:grid-cols-3">
             {tags.map((t, i) => (
-              <li key={t.tag} className="border-b border-line">
+              <li key={t.tag} className="row-mark border-b border-line">
                 <Link
                   href={`/tags/${encodeURIComponent(t.tag)}`}
                   className="group flex items-baseline gap-3 py-4 transition-colors hover:bg-[color-mix(in_oklab,var(--ink)_4%,transparent)] md:gap-4"
                 >
-                  <span className="mono shrink-0 text-[0.6875rem] tracking-[0.06em] text-faint tabular-nums">
+                  <span className="mono row-no shrink-0 text-[0.6875rem] tracking-[0.06em] text-faint tabular-nums">
                     {pad2(i + 1)}
                   </span>
 

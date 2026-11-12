@@ -5,10 +5,16 @@ import { cn } from "@/lib/cn";
 
 type Mode = "light" | "dark";
 
+let animTimer: number | undefined;
+
 function apply(mode: Mode) {
   const root = document.documentElement;
+  // 只在用户主动切换时开启颜色过渡；首屏由内联脚本上色，不经过这里，不会闪。
+  root.classList.add("theme-anim");
   root.classList.toggle("dark", mode === "dark");
   root.style.colorScheme = mode;
+  window.clearTimeout(animTimer);
+  animTimer = window.setTimeout(() => root.classList.remove("theme-anim"), 300);
   try {
     localStorage.setItem("theme", mode);
   } catch {}

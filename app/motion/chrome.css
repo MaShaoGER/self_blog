@@ -1,0 +1,152 @@
+/* chrome：见 tokens.css 的全站动效约定
+   站头 / 导航 / 页脚 / 主题拨杆 / 换页过渡 */
+
+/* ------------------------------------------------------------
+   换页：主内容整体换页，顶栏与页脚不动
+   （app/(site)/layout.tsx → components/site/page-transition.tsx）
+   ------------------------------------------------------------ */
+::view-transition {
+  pointer-events: none;
+}
+
+/* 旧页留在根快照里：把默认交叉淡出的时长对齐到 token */
+::view-transition-group(root) {
+  animation-duration: var(--dur-2);
+}
+
+::view-transition-old(root) {
+  animation-duration: var(--dur-2);
+  animation-timing-function: var(--ease-out);
+}
+
+::view-transition-new(root) {
+  animation-duration: var(--dur-2);
+  animation-timing-function: var(--ease-out);
+}
+
+::view-transition-group(.chrome-page-in) {
+  animation-duration: var(--dur-3);
+  z-index: 1;
+}
+
+::view-transition-new(.chrome-page-in) {
+  animation: chrome-page-in var(--dur-3) var(--ease-out) both;
+}
+
+@keyframes chrome-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ------------------------------------------------------------
+   导航当前项：一条橙色短线在栏目间平移
+   （components/site/nav-links.tsx）
+   ------------------------------------------------------------ */
+.nav-active-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 2px;
+  background-color: var(--accent);
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+.nav-active-bar[data-anim="true"] {
+  transition: transform var(--dur-2) var(--ease-out);
+}
+
+/* 换页时顶栏先是快照：等页面交接（--dur-2）结束再滑，避免看起来像瞬移 */
+.nav-active-bar[data-shift="true"] {
+  transition-delay: var(--dur-2);
+}
+
+/* ------------------------------------------------------------
+   站头滚动状态：底部 1px 墨线加深
+   （components/site/header-scroll.tsx 往 html 上挂 .is-scrolled）
+   ------------------------------------------------------------ */
+.header-seam {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  background-color: var(--ink);
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease-out);
+  pointer-events: none;
+}
+
+html.is-scrolled .header-seam {
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------
+   主题切换：全站颜色走 --dur-2；拨杆滑块带轻微过冲
+   （components/ui/theme-toggle.tsx 切换时短暂挂 .theme-anim，
+   避免首屏加载时出现颜色过渡）
+   ------------------------------------------------------------ */
+html.theme-anim,
+html.theme-anim *,
+html.theme-anim *::before,
+html.theme-anim *::after {
+  transition:
+    background-color var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease-out),
+    color var(--dur-2) var(--ease-out),
+    fill var(--dur-2) var(--ease-out),
+    transform var(--dur-2) var(--ease-snap);
+}
+
+/* 滑块位移：机械到位，略过冲（覆盖 globals.css 里的 .12s ease） */
+.lever::after {
+  transition: transform var(--dur-2) var(--ease-snap);
+}
+
+/* ------------------------------------------------------------
+   站头与页脚链接：悬停时下划线从左向右画出
+   ------------------------------------------------------------ */
+.link-draw {
+  position: relative;
+}
+
+.link-draw::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -2px;
+  left: 0;
+  height: 1px;
+  background-color: currentColor;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform var(--dur-2) var(--ease-out);
+}
+
+.link-draw:hover::after,
+.link-draw:focus-visible::after {
+  transform: scaleX(1);
+}
+
+/* ------------------------------------------------------------
+   减弱动效：视图过渡伪元素需各自归零（globals.css 管不到它们）
+   ------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+
+  .nav-active-bar[data-shift="true"] {
+    transition-delay: 0s;
+  }
+}

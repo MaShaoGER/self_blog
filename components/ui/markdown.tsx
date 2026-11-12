@@ -5,6 +5,7 @@ import rehypeSlug from "rehype-slug";
 import { cn } from "@/lib/cn";
 import { CodeToolbar } from "@/components/site/code-block";
 import { ImageLightbox } from "@/components/site/lightbox";
+import { ResourceEmbed } from "@/components/resources/resource-embed";
 
 /**
  * Shared renderer for posts, the about page and the editor preview.
@@ -132,6 +133,9 @@ export function Markdown({ source, className }: { source: string; className?: st
           },
           pre: ({ node, children, ...rest }) => {
             const { language, code } = codeBlockInfo(node, fences);
+            if (fences.get(node?.position?.start?.line ?? -1)?.toLowerCase() === "resource" && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(code.trim())) {
+              return <ResourceEmbed id={code.trim()} />;
+            }
             return (
               <div className="my-[1.8em]! border border-line-ink">
                 <CodeToolbar language={language} code={code} />

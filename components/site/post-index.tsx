@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PostLink } from "./post-link";
 import type { PostMeta } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { dateParts } from "./num-text";
@@ -15,24 +15,24 @@ export function groupByYear<T extends Pick<PostMeta, "date">>(posts: T[]): { yea
 }
 
 /** 目录行编号：列表内倒序 NO.001 起 */
-function entryNo(index: number, total: number): string {
+export function entryNo(index: number, total: number): string {
   return String(total - index).padStart(3, "0");
 }
 
 /**
  * 文章目录：参数表版式。
  * 桌面 6 列（NO. / TITLE / DATE / CAT / MIN / →），移动端两行堆叠；语义仍是 ol > li。
+ * `all` 为筛选前的完整列表：传入后编号仍按全站顺序，筛选不改号。
  */
-export function PostIndex({ posts, compact = false }: { posts: PostMeta[]; compact?: boolean }) {
-  const total = posts.length;
+export function PostIndex({ posts, all = posts, compact = false }: { posts: PostMeta[]; all?: PostMeta[]; compact?: boolean }) {
+  const total = all.length;
 
   return (
     <div className="flex flex-col">
       {groupByYear(posts).map((g, gi) => {
-        const startIndex = posts.findIndex((p) => p.slug === g.posts[0]?.slug);
         return (
           <section key={g.year} aria-labelledby={`y-${g.year}`} className={cn(gi > 0 && "mt-16 lg:mt-20")}>
-            <div className="mb-0 flex items-end justify-between gap-4 border-b border-line-ink pb-2">
+            <div className="pi-year mb-0 flex items-end justify-between gap-4 border-b border-line-ink pb-2">
               <h2 id={`y-${g.year}`} className="mono text-[0.6875rem] font-medium tracking-[0.14em] text-muted uppercase">
                 <span className="text-ink">{g.year}</span>
                 <span aria-hidden className="mx-1.5 text-faint">
@@ -44,18 +44,18 @@ export function PostIndex({ posts, compact = false }: { posts: PostMeta[]; compa
               <span aria-hidden className="ruler mb-1 hidden w-24 text-line-strong sm:block" />
             </div>
 
-            <ol className="border-t-0">
-              {g.posts.map((p, i) => {
-                const idx = startIndex >= 0 ? startIndex + i : i;
+            <ol className="list-stagger border-t-0">
+              {g.posts.map((p) => {
+                const idx = all.indexOf(p);
                 const no = entryNo(idx, total);
                 const { month, day } = dateParts(p.date);
                 const cat = p.tags[0];
                 const extra = Math.max(0, p.tags.length - 1);
 
                 return (
-                  <li key={p.slug} className="group border-b border-line">
-                    <Link
-                      href={`/posts/${p.slug}`}
+                  <li key={p.slug} data-slug={p.slug} className="group row-mark border-b border-line">
+                    <PostLink
+                      slug={p.slug}
                       className={cn(
                         "relative grid items-baseline gap-x-5 gap-y-1.5 py-4 transition-colors",
                         "hover:bg-[color-mix(in_oklab,var(--ink)_4%,transparent)]",
@@ -64,11 +64,15 @@ export function PostIndex({ posts, compact = false }: { posts: PostMeta[]; compa
                         compact && "md:grid-cols-[4.5rem_minmax(0,1fr)_7rem_5.5rem_3.5rem_2rem]",
                       )}
                     >
-                      <span className="mono text-[0.6875rem] tracking-[0.06em] text-faint tabular-nums">{no}</span>
+                      <span className="mono row-no text-[0.6875rem] tracking-[0.06em] text-faint tabular-nums">{no}</span>
 
                       <span className="min-w-0">
                         <span className="flex min-w-0 items-baseline gap-2">
-                          <span className="display block min-w-0 flex-1 truncate text-[1.0625rem] leading-tight text-ink transition-colors group-hover:text-accent-ink md:text-[1.1875rem]">
+                          {/* data-title：点进文章时，大标题从这里滑到页头（见 post-link.tsx） */}
+                          <span
+                            data-title
+                            className="display block min-w-0 flex-1 truncate text-[1.0625rem] leading-tight text-ink transition-colors group-hover:text-accent-ink md:text-[1.1875rem]"
+                          >
                             {p.title}
                           </span>
                           {p.status === "scheduled" && (
@@ -93,7 +97,7 @@ export function PostIndex({ posts, compact = false }: { posts: PostMeta[]; compa
 
                       <span className="hidden md:block">
                         {cat ? (
-                          <span className="inline-flex max-w-full items-baseline border border-line-strong px-1.5 py-[3px] text-[0.6875rem] leading-none text-ink">
+                          <span className="tag-chip inline-flex max-w-full items-baseline border border-line-strong px-1.5 py-[3px] text-[0.6875rem] leading-none text-ink">
                             <span className="truncate">{cat}</span>
                             {extra > 0 && <span className="mono ml-1 text-[0.625rem] text-faint">+{extra}</span>}
                           </span>
@@ -128,7 +132,7 @@ export function PostIndex({ posts, compact = false }: { posts: PostMeta[]; compa
                           </>
                         )}
                       </span>
-                    </Link>
+                    </PostLink>
                   </li>
                 );
               })}

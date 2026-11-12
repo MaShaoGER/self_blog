@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 
 const clampPct = (n: number) => Math.min(100, Math.max(0, n));
@@ -8,11 +8,15 @@ const clampPct = (n: number) => Math.min(100, Math.max(0, n));
 /**
  * 阅读进度：1px 凹槽 + 橙色进度段 + 右侧 mono 读数。
  * 读数取当前页面的滚动比例，scroll 用 requestAnimationFrame 节流；
- * reduced-motion 下取消宽度过渡，读数与进度照常更新。
+ * 显示值再向目标值缓动，读到 100% 时读数变橙并过冲一次（每次加载只触发一次）。
  */
 export function ReadingProgress({ className }: { className?: string }) {
   const [pct, setPct] = useState(0);
+  const [shown, setShown] = useState(0);
   const [reduce, setReduce] = useState(false);
+  const [arrived, setArrived] = useState(false);
+  const shownRef = useRef(0);
+  const hitEnd = useRef(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -52,8 +56,39 @@ export function ReadingProgress({ className }: { className?: string }) {
     };
   }, []);
 
+  // 显示值缓动到目标值：读数与进度段同时平滑
+  useEffect(() => {
+    if (reduce) {
+      shownRef.current = pct;
+      setShown(pct);
+      return;
+    }
+    let frame = 0;
+    const step = () => {
+      const cur = shownRef.current;
+      const next = cur + (pct - cur) * 0.25;
+      if (Math.abs(pct - next) < 0.5) {
+        shownRef.current = pct;
+        setShown(pct);
+        return;
+      }
+      shownRef.current = next;
+      setShown(next);
+      frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [pct, reduce]);
+
+  // 到位反馈只触发一次
+  useEffect(() => {
+    if (pct < 100 || hitEnd.current) return;
+    hitEnd.current = true;
+    setArrived(true);
+  }, [pct]);
+
   const value = clampPct(pct);
-  const transition = reduce ? "none" : "width 120ms linear, left 120ms linear";
+  const percent = Math.min(100, Math.max(0, shown));
 
   return (
     <div
@@ -74,18 +109,26 @@ export function ReadingProgress({ className }: { className?: string }) {
 
       {/* 1px 凹槽 + 橙色进度段 + 前端游标。栏宽不足时读数折到下一行，不挤压刻度 */}
       <span aria-hidden className="relative h-px min-w-[1.5rem] flex-1 bg-line-strong">
-        <span className="absolute inset-y-0 left-0 bg-accent" style={{ width: `${value}%`, transition }} />
         <span
-          className="absolute -top-[3px] h-[7px] w-[2px] bg-accent"
-          style={{ left: `clamp(0px, calc(${value}% - 2px), calc(100% - 2px))`, transition }}
+          className="absolute inset-y-0 left-0 w-full origin-left bg-accent"
+          style={{ transform: `scaleX(${percent / 100})` }}
         />
+        <span
+          className="pointer-events-none absolute inset-y-0 left-0 w-full"
+          style={{ transform: `translateX(calc(${percent}% - ${percent * 0.02}px))` }}
+        >
+          <span className="absolute -top-[3px] left-0 h-[7px] w-[2px] bg-accent" />
+        </span>
       </span>
 
       <span
         aria-hidden
-        className="mono ml-auto w-8 shrink-0 text-right text-[0.6875rem] leading-none tracking-[0.06em] text-ink tabular-nums"
+        className={cn(
+          "reading-pct mono ml-auto w-8 shrink-0 text-right text-[0.6875rem] leading-none tracking-[0.06em] tabular-nums",
+          arrived ? "reading-pct-done" : "text-ink",
+        )}
       >
-        {value}%
+        {Math.round(percent)}%
       </span>
     </div>
   );

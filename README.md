@@ -21,13 +21,16 @@ pnpm typecheck   # 类型检查
 
 - **账号管理**：管理员创建、停用、重置协作者账号，区分管理员与编辑。
 - **我的账号**：修改密码、查看登录设备、退出自己的其他设备。
-- **文章与图库**：Markdown 编辑、草稿与定时发布、图片上传与 WebP 转换。
+- **文章与图库**：Markdown 编辑、草稿与定时发布、图片上传与 WebP 转换；工具栏可插入本地视频或视频网站链接。
 - **项目展示**：后台新增、编辑、删除项目，修改链接、标签和状态。
+- **工程资源**：目录浏览、视频播放、GLB 模型预览与工程文件分享，支持公开/后台私有访问；本地视频按需上传，外链不转存。
 - **站点设置**：编辑站名、作者、介绍、首页文案、全站导航与页脚；统计数字自动生成。
 
 完整权限和迁移说明见 [多人账号与首页文案](./docs/accounts-and-homepage.md)。
 
 发布前运行 `pnpm check:release`，包含类型检查、构建、功能测试、独立生产包检查与依赖审计。
+
+资源目录在 `/resources`，录入入口在 `/admin/resources`；文章编辑器的「插入视频」支持 MP4/WebM 本地上传（单文件最多 200 MiB）以及 YouTube/哔哩哔哩链接。原博客主题不变，实验页面已移除。配置、权限与 Markdown 引用见 [媒体与工程资源](./docs/media-resources.md)；回归可运行 `pnpm test:resources` 和 `pnpm test:videos`。
 
 ## 部署
 
@@ -55,6 +58,7 @@ app/
 │   └── posts/       # 编辑器（左编辑右预览，移动端切换标签）
 ├── login/           # 登录页
 ├── api/upload/      # 图片上传
+├── api/resources/   # 资源元数据、授权访问与下载跳转
 ├── feed.xml/        # RSS
 ├── uploads/[...path]/ # 静态图片输出
 └── globals.css      # 全局样式 + 设计 token
@@ -62,6 +66,7 @@ app/
 components/
 ├── site/            # 前台组件（header、footer、目录、评论表单）
 ├── admin/           # 后台组件（导航、筛选标签、确认对话框、状态标签）
+├── resources/       # 视频播放器、GLB 预览与资源浏览
 └── ui/              # 通用 UI（Markdown 渲染）
 
 lib/
@@ -69,6 +74,7 @@ lib/
 ├── comments.ts      # 评论管理（状态、审核、按 IP 限流）
 ├── settings.ts      # 站点、首页、导航与页脚设置
 ├── projects.ts      # 项目展示的读写与校验
+├── resources.ts     # 外部资源目录、继承权限与原子持久化
 ├── auth.ts          # 会话管理（创建、验证、列出设备、移除会话）
 ├── accounts.ts      # 账号、角色、密码哈希与版本撤销
 ├── crypto.ts        # HMAC 签名、令牌生成、密码校验
@@ -86,12 +92,13 @@ examples/data/       # 仓库里的演示内容
 
 ../self_blog-data/   # 默认运行数据目录，位于源码外
 ├── posts/*.md       # Markdown 文章
-├── uploads/         # 上传的图片（按年月分目录）
+├── uploads/         # 图片按年月分目录，视频位于 videos/（不进入仓库）
 ├── comments.json    # 评论列表
 ├── sessions.json    # 登录会话
 ├── accounts.json    # 账号与密码哈希（不提交）
 ├── settings.json    # 站点配置
-└── projects.json    # 项目展示
+├── projects.json    # 项目展示
+└── resources.json   # 工程、外链和本地媒体的索引
 
 deploy/
 ├── Caddyfile        # 反向代理 + 自动 HTTPS

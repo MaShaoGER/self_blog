@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { cn } from "@/lib/cn";
 import { readProjects } from "@/lib/projects";
 import type { Project } from "@/lib/types";
@@ -33,7 +34,7 @@ function ProjectRow({ project, no }: { project: Project; no: number }) {
 
   const cells = (
     <>
-      <span className="mono text-[0.6875rem] tracking-[0.06em] text-faint tabular-nums">{pad2(no)}</span>
+      <span className="mono row-no text-[0.6875rem] tracking-[0.06em] text-faint tabular-nums">{pad2(no)}</span>
 
       <span className="min-w-0">
         <span className="flex min-w-0 items-baseline gap-2.5">
@@ -116,7 +117,7 @@ function ProjectRow({ project, no }: { project: Project; no: number }) {
     "lg:grid-cols-[4rem_minmax(0,1fr)_4.5rem_6rem_11rem_1.75rem]";
 
   return (
-    <li className="group border-b border-line">
+    <li className="group row-mark border-b border-line">
       {link ? (
         <a
           href={link}
@@ -148,7 +149,7 @@ export default async function ProjectsPage() {
 
   return (
     <div className="sheet">
-      <header className="wrap border-b border-line-ink pt-10 pb-8 lg:pt-14 lg:pb-10">
+      <header className="page-reveal wrap border-b border-line-ink pt-10 pb-8 lg:pt-14 lg:pb-10">
         <p className="mono text-[0.6875rem] tracking-[0.14em] text-muted uppercase">
           PROJECTS <span aria-hidden className="text-faint">/</span> 项目
         </p>
@@ -168,6 +169,9 @@ export default async function ProjectsPage() {
             </span>
             {span}
           </p>
+        </div>
+        <div className="mt-6 flex flex-wrap gap-4">
+          <Link href="/resources" className="keybtn">浏览工程与素材</Link>
         </div>
       </header>
 
@@ -189,7 +193,7 @@ export default async function ProjectsPage() {
             </p>
           </div>
         ) : (
-          <ol className="border-t border-line-ink">
+          <ol className="list-stagger border-t border-line-ink">
             {projects.map((p, i) => (
               <ProjectRow key={`${p.title}-${p.year}`} project={p} no={i + 1} />
             ))}

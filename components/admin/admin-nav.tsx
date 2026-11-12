@@ -27,6 +27,7 @@ const ITEMS: Item[] = [
   { href: "/admin/posts", label: "文章", en: "ENTRIES", icon: FileText },
   { href: "/admin/comments", label: "评论", en: "COMMENTS", icon: MessageSquare },
   { href: "/admin/media", label: "图库", en: "MEDIA", icon: Images },
+  { href: "/admin/resources", label: "工程资源", en: "RESOURCES", icon: FolderOpen },
   { href: "/admin/projects", label: "项目", en: "PROJECTS", icon: FolderOpen, adminOnly: true },
   { href: "/admin/accounts", label: "账号管理", en: "ACCOUNTS", icon: Users, adminOnly: true },
   { href: "/admin/devices", label: "我的账号", en: "ACCOUNT", icon: MonitorSmartphone },
@@ -195,9 +196,9 @@ export function AdminNav({
       {/* 移动端：底部 tab */}
       <nav
         aria-label="后台导航"
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-line-strong bg-[color-mix(in_oklab,var(--paper)_96%,transparent)] pb-[env(safe-area-inset-bottom)] backdrop-blur-[2px] md:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 overflow-x-auto border-t border-line-strong bg-[color-mix(in_oklab,var(--paper)_96%,transparent)] pb-[env(safe-area-inset-bottom)] backdrop-blur-[2px] md:hidden"
       >
-        <ul className="grid" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
+        <ul className="grid" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(4rem, 1fr))` }}>
           {items.map(({ href, label, icon: Icon }) => {
             const active = isActive(pathname, href);
             const count = href === "/admin/comments" ? pending : 0;

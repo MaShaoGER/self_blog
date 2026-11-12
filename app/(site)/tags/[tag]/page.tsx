@@ -32,7 +32,7 @@ export default async function TagPage({ params }: Props) {
 
   return (
     <div className="sheet">
-      <header className="wrap border-b border-line-ink pt-8 pb-8 lg:pt-10 lg:pb-10">
+      <header className="page-reveal wrap border-b border-line-ink pt-8 pb-8 lg:pt-10 lg:pb-10">
         <nav aria-label="面包屑" className="mono flex items-baseline gap-2 text-[0.6875rem] tracking-[0.12em] uppercase">
           <Link href="/tags" className="text-muted transition-colors hover:text-accent-ink">
             标签索引

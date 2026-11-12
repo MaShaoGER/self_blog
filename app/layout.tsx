@@ -5,6 +5,11 @@ import "@fontsource-variable/inter";
 import "@fontsource/ibm-plex-mono/400.css";
 import "@fontsource/ibm-plex-mono/500.css";
 import "./globals.css";
+import "./motion/tokens.css";
+import "./motion/chrome.css";
+import "./motion/lists.css";
+import "./motion/reading.css";
+import "./motion/controls.css";
 import { getSettings } from "@/lib/settings";
 import { siteUrl } from "@/lib/env";
 

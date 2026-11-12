@@ -32,12 +32,12 @@ export function RelatedPosts({ posts, className }: { posts: PostMeta[]; classNam
         {posts.map((p, i) => {
           const cat = postCat(p);
           return (
-            <li key={p.slug} className="border-b border-line">
+            <li key={p.slug} className="row-mark border-b border-line">
               <Link
                 href={`/posts/${p.slug}`}
                 className="group grid grid-cols-[1.75rem_minmax(0,1fr)] items-baseline gap-x-3 gap-y-1 py-3 transition-colors hover:bg-[color-mix(in_oklab,var(--ink)_4%,transparent)] sm:grid-cols-[2.25rem_minmax(0,1fr)_6rem_4.5rem] sm:gap-x-5"
               >
-                <span className="mono text-[0.6875rem] tracking-[0.06em] text-faint tabular-nums">{pad2(i + 1)}</span>
+                <span className="mono row-no text-[0.6875rem] tracking-[0.06em] text-faint tabular-nums">{pad2(i + 1)}</span>
 
                 <span className="min-w-0">
                   <span className="display block truncate text-[0.9375rem] leading-snug text-ink transition-colors group-hover:text-accent-ink">

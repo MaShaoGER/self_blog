@@ -1,0 +1,189 @@
+/* reading：见 tokens.css 的全站动效约定 */
+
+/* ---- 正文 h2 结构线：进入视口时从左画出一次；不支持滚动时间轴时保持静态线 ---- */
+@keyframes reading-rule-draw {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .article h2 {
+    border-top-color: transparent;
+  }
+
+  .article h2::after {
+    content: "";
+    position: absolute;
+    top: -1px;
+    right: 0;
+    left: 0;
+    height: 1px;
+    background-color: var(--line-ink);
+    transform: scaleX(0);
+    transform-origin: left center;
+    animation: reading-rule-draw linear both;
+    animation-timeline: view();
+    animation-range: entry 10% entry 90%;
+  }
+}
+
+/* ---- 目录点击：目标标题短暂强调（标题文字与 h2 左侧编号） ---- */
+@keyframes reading-heading-flash {
+  from {
+    color: var(--accent-ink);
+  }
+}
+
+@keyframes reading-num-flash {
+  from {
+    opacity: 0.15;
+    transform: translateY(-50%) scale(1.35);
+  }
+}
+
+.article :is(h2, h3, h4).reading-flash {
+  animation: reading-heading-flash var(--dur-3) var(--ease-out) 1;
+}
+
+.article h2.reading-flash::before {
+  animation: reading-num-flash var(--dur-3) var(--ease-snap) 1;
+}
+
+/* ---- 目录：同一个橙色标记在条目间滑动 ---- */
+.reading-toc-marker {
+  transition:
+    transform var(--dur-2) var(--ease-out),
+    opacity var(--dur-2) linear;
+}
+
+.reading-toc-marker[data-armed="false"] {
+  transition: none;
+}
+
+/* ---- 参数表 / 参数条：读数依次亮起 ---- */
+@keyframes reading-param-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.reading-param {
+  animation: reading-param-in var(--dur-3) var(--ease-out) both;
+}
+
+/* ---- 阅读进度：读数到位 ---- */
+@keyframes reading-pct-hit {
+  0% {
+    transform: scale(1);
+  }
+
+  35% {
+    transform: scale(1.16);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.reading-pct {
+  display: inline-block;
+  transform-origin: 100% 50%;
+}
+
+.reading-pct-done {
+  color: var(--accent-ink);
+  animation: reading-pct-hit var(--dur-3) var(--ease-snap) 1 both;
+}
+
+/* ---- 代码块复制键：键帽下压 + 已复制文案到位 ---- */
+@keyframes reading-copy-hit {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+
+.reading-copy-key {
+  transition:
+    transform var(--dur-1) var(--ease-out),
+    background-color var(--dur-1) ease,
+    color var(--dur-1) ease;
+}
+
+.reading-copy-key:active {
+  transform: translateY(2px);
+}
+
+.reading-copy-label {
+  display: inline-block;
+}
+
+.reading-copy-label[data-copied="true"] {
+  animation: reading-copy-hit var(--dur-2) var(--ease-snap) both;
+}
+
+/* ---- 评论：提交成功印章 + 新评论入场 ---- */
+@keyframes reading-stamp-in {
+  from {
+    opacity: 0;
+    transform: rotate(-6deg) scale(1.18);
+  }
+
+  to {
+    opacity: 1;
+    transform: rotate(-6deg) scale(1);
+  }
+}
+
+.reading-stamp {
+  display: inline-block;
+  transform: rotate(-6deg);
+  transform-origin: center;
+  animation: reading-stamp-in var(--dur-3) var(--ease-snap) both;
+}
+
+@keyframes reading-entry-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.reading-entry-new {
+  animation: reading-entry-in var(--dur-3) var(--ease-out) both;
+}
+
+/* ---- 减弱动效：入场延迟归零，滚动时间轴退回静态线 ---- */
+@media (prefers-reduced-motion: reduce) {
+  .reading-param {
+    animation-delay: 0s !important;
+  }
+
+  .article h2::after {
+    animation: none !important;
+    transform: scaleX(1);
+  }
+
+  .reading-copy-key:active {
+    transform: none;
+  }
+}
+
+/* 打印：结构线始终完整，不依赖滚动时间轴 */
+@media print {
+  .article h2 {
+    border-top-color: var(--line-ink);
+  }
+
+  .article h2::after {
+    animation: none !important;
+    transform: scaleX(1);
+  }
+}

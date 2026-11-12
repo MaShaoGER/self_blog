@@ -26,7 +26,7 @@ export default async function ArchivePage() {
 
   return (
     <div className="sheet">
-      <header className="wrap border-b border-line-ink pt-10 pb-8 lg:pt-14 lg:pb-10">
+      <header className="page-reveal wrap border-b border-line-ink pt-10 pb-8 lg:pt-14 lg:pb-10">
         <p className="mono text-[0.6875rem] tracking-[0.14em] text-muted uppercase">
           ARCHIVE <span aria-hidden className="text-faint">/</span> 索引
         </p>

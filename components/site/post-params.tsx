@@ -48,14 +48,19 @@ export function SpecSheet({ post, className }: { post: PostMeta; className?: str
     <div className={cn("metal p-3 pt-4", className)}>
       <SilkStrip className="mb-2.5">SPEC / PLN-01</SilkStrip>
       <dl>
-        {rows.map((row) => (
+        {rows.map((row, i) => (
           <div
             key={row.k}
             className="flex items-baseline justify-between gap-3 border-b py-1.5 last:border-b-0"
             style={{ borderColor: "var(--metal-line)" }}
           >
             <dt className="mono text-[0.6875rem] tracking-[0.12em] uppercase opacity-70">{row.k}</dt>
-            <dd className="mono text-right text-[0.75rem] leading-relaxed tracking-[0.05em] tabular-nums">{row.v}</dd>
+            <dd
+              className="reading-param mono text-right text-[0.75rem] leading-relaxed tracking-[0.05em] tabular-nums"
+              style={{ animationDelay: `calc(var(--stagger) * ${i})` }}
+            >
+              {row.v}
+            </dd>
           </div>
         ))}
       </dl>
@@ -75,10 +80,13 @@ export function MetaStrip({ post, className }: { post: PostMeta; className?: str
 
   return (
     <dl className={cn("grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-4", className)}>
-      {rows.map((row) => (
+      {rows.map((row, i) => (
         <div key={row.k} className="min-w-0 border-t border-line pt-2">
           <dt className="mono text-[0.6875rem] tracking-[0.14em] text-faint uppercase">{row.k}</dt>
-          <dd className="mono mt-1 truncate text-[0.75rem] leading-relaxed tracking-[0.05em] text-ink tabular-nums">
+          <dd
+            className="reading-param mono mt-1 truncate text-[0.75rem] leading-relaxed tracking-[0.05em] text-ink tabular-nums"
+            style={{ animationDelay: `calc(var(--stagger) * ${i})` }}
+          >
             {row.v}
           </dd>
         </div>

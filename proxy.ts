@@ -1,11 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { getResourceOrigins, ResourcesDataError } from "@/lib/resources";
 
 /**
  * CSP 由这里逐请求生成：nonce 每请求唯一，页面里的内联主题脚本和 Next 的
  * 引导脚本都靠它通过严格的 script-src。开发模式下额外放开 eval 与 HMR 的
  * websocket，生产模式则强制升级到 HTTPS。
  */
-function contentSecurityPolicy(nonce: string): string {
+function contentSecurityPolicy(nonce: string, origins: string[]): string {
   const dev = process.env.NODE_ENV !== "production";
   return [
     "default-src 'self'",
@@ -13,10 +14,11 @@ function contentSecurityPolicy(nonce: string): string {
     "object-src 'none'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob:",
+    `img-src 'self' data: blob:${origins.length ? ` ${origins.join(" ")}` : ""}`,
     "font-src 'self'",
-    `connect-src 'self'${dev ? " ws: wss:" : ""}`,
-    "media-src 'self'",
+    `connect-src 'self'${dev ? " ws: wss:" : ""}${origins.length ? ` ${origins.join(" ")}` : ""}`,
+    `media-src 'self' blob:${origins.length ? ` ${origins.join(" ")}` : ""}`,
+    "frame-src 'self' https://www.youtube.com https://player.bilibili.com",
     "form-action 'self'",
     "frame-ancestors 'none'",
     ...(dev ? [] : ["upgrade-insecure-requests"]),
@@ -29,9 +31,25 @@ function contentSecurityPolicy(nonce: string): string {
  *    真正的校验（签名 + 吊销）在 requireAdmin()/assertAdmin()。
  * 2. 为每个页面请求生成 CSP nonce（静态资源与 API 不需要）。
  */
-export function proxy(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const nonce = btoa(crypto.randomUUID());
-  const csp = contentSecurityPolicy(nonce);
+  // A document keeps its CSP during client-side navigation, so registered
+  // resource origins must be available even when the initial page is the home page.
+  const origins = new Set<string>();
+  try {
+    for (const origin of await getResourceOrigins()) origins.add(origin);
+  } catch (error) {
+    // A damaged catalogue must not broaden CSP or break unrelated pages.
+    if (!(error instanceof ResourcesDataError)) throw error;
+  }
+  for (const raw of (process.env.BLOG_MEDIA_ORIGINS ?? "").split(",")) {
+    if (!raw.trim()) continue;
+    try {
+      const url = new URL(raw.trim());
+      if (url.protocol === "https:" && !url.username && !url.password && url.pathname === "/" && !url.search && !url.hash) origins.add(url.origin);
+    } catch { /* Invalid configuration stays blocked. */ }
+  }
+  const csp = contentSecurityPolicy(nonce, [...origins].sort());
 
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set("x-nonce", nonce);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 
 export type TocItem = { depth: 2 | 3; text: string; id: string };
@@ -51,18 +51,79 @@ function useActiveHeading(ids: string[]): string | null {
   return active;
 }
 
-function TocList({ items, active, onNavigate }: { items: TocItem[]; active: string | null; onNavigate?: () => void }) {
+/** 点击目录后让目标标题闪一下（编号放大回位、文字短暂转橙），--dur-3 内结束。 */
+function flashHeading(id: string) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add("reading-flash");
+  const done = () => el.classList.remove("reading-flash");
+  el.addEventListener("animationend", done, { once: true });
+  window.setTimeout(done, 800);
+}
+
+function TocList({
+  items,
+  active,
+  onNavigate,
+  track,
+}: {
+  items: TocItem[];
+  active: string | null;
+  onNavigate?: () => void;
+  /** 桌面目录：只用一个共享标记滑到当前条目 */
+  track?: boolean;
+}) {
   const numbers = sectionNumbers(items);
+  const listRef = useRef<HTMLOListElement>(null);
+  const dots = useRef(new Map<string, HTMLSpanElement | null>());
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const [armed, setArmed] = useState(false);
+
+  useEffect(() => {
+    if (!track) return;
+    const measure = () => {
+      const list = listRef.current;
+      const dot = active ? dots.current.get(active) : null;
+      if (!list || !dot) {
+        setPos(null);
+        return;
+      }
+      const l = list.getBoundingClientRect();
+      const d = dot.getBoundingClientRect();
+      setPos({ x: d.left - l.left, y: d.top - l.top });
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [active, track, items]);
+
+  // 首次定位不放过渡，避免标记从列表顶角飞入
+  useEffect(() => {
+    if (!pos || armed) return;
+    const frame = requestAnimationFrame(() => setArmed(true));
+    return () => cancelAnimationFrame(frame);
+  }, [pos, armed]);
 
   return (
-    <ol>
+    <ol ref={listRef} className="relative">
+      {track && (
+        <span
+          aria-hidden
+          data-armed={armed}
+          className="reading-toc-marker pointer-events-none absolute top-0 left-0 size-1.5 rounded-full bg-accent"
+          style={{ transform: `translate(${pos?.x ?? 0}px, ${pos?.y ?? 0}px)`, opacity: pos ? 1 : 0 }}
+        />
+      )}
       {items.map((h, i) => {
         const on = h.id === active;
         return (
           <li key={h.id} className="border-b border-line last:border-b-0">
             <a
               href={`#${h.id}`}
-              onClick={onNavigate}
+              onClick={() => {
+                flashHeading(h.id);
+                onNavigate?.();
+              }}
               aria-current={on ? "location" : undefined}
               className={cn(
                 "group flex items-baseline gap-2 py-1.5 transition-colors",
@@ -82,10 +143,10 @@ function TocList({ items, active, onNavigate }: { items: TocItem[]; active: stri
               <span className="min-w-0 flex-1 text-[0.875rem] leading-snug">{h.text}</span>
               <span
                 aria-hidden
-                className={cn(
-                  "mt-[0.4em] size-1.5 shrink-0 rounded-full transition-opacity",
-                  on ? "bg-accent opacity-100" : "opacity-0",
-                )}
+                ref={(el) => {
+                  dots.current.set(h.id, el);
+                }}
+                className="mt-[0.4em] size-1.5 shrink-0 rounded-full"
               />
             </a>
           </li>
@@ -95,7 +156,7 @@ function TocList({ items, active, onNavigate }: { items: TocItem[]; active: stri
   );
 }
 
-/** 桌面左栏目录：编号 + 当前项橙点。 */
+/** 桌面左栏目录：编号 + 单个橙色标记滑到当前项。 */
 export function Toc({ items, className }: { items: TocItem[]; className?: string }) {
   const [ids] = useState(() => items.map((i) => i.id));
   const active = useActiveHeading(ids);
@@ -115,7 +176,7 @@ export function Toc({ items, className }: { items: TocItem[]; className?: string
           {String(count).padStart(2, "0")}
         </span>
       </div>
-      <TocList items={items} active={active} />
+      <TocList items={items} active={active} track />
     </nav>
   );
 }

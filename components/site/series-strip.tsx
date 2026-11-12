@@ -44,7 +44,7 @@ export function SeriesStrip({
         </span>
 
         <span className="mono shrink-0 text-[0.6875rem] tracking-[0.14em] text-faint uppercase tabular-nums">
-          PART <span className="text-accent-ink">{pad2(i + 1)}</span> OF {pad2(posts.length)}
+          PART <span className="part-mark text-accent-ink">{pad2(i + 1)}</span> OF {pad2(posts.length)}
         </span>
       </div>
 
@@ -54,9 +54,9 @@ export function SeriesStrip({
             <Link
               href={`/posts/${prev.slug}`}
               rel="prev"
-              className="group flex min-w-0 items-baseline gap-2 py-0.5 transition-colors"
+              className="strip-link group flex min-w-0 items-baseline gap-2 py-0.5 transition-colors"
             >
-              <span className="mono shrink-0 text-[0.625rem] tracking-[0.1em] whitespace-nowrap text-accent-ink uppercase tabular-nums">
+              <span className="strip-arrow mono shrink-0 text-[0.625rem] tracking-[0.1em] whitespace-nowrap text-accent-ink uppercase tabular-nums">
                 ← PART {pad2(i)}
               </span>
               <span className="min-w-0 truncate text-[0.8125rem] leading-snug text-muted transition-colors group-hover:text-accent-ink">
@@ -72,13 +72,13 @@ export function SeriesStrip({
             <Link
               href={`/posts/${next.slug}`}
               rel="next"
-              className="group ml-auto flex min-w-0 items-baseline gap-2 py-0.5 transition-colors"
+              className="strip-link group ml-auto flex min-w-0 items-baseline gap-2 py-0.5 transition-colors"
             >
               <span className="min-w-0 truncate text-[0.8125rem] leading-snug text-muted transition-colors group-hover:text-accent-ink">
                 <span className="sr-only">下一册：</span>
                 {next.title}
               </span>
-              <span className="mono shrink-0 text-[0.625rem] tracking-[0.1em] whitespace-nowrap text-accent-ink uppercase tabular-nums">
+              <span className="strip-arrow mono shrink-0 text-[0.625rem] tracking-[0.1em] whitespace-nowrap text-accent-ink uppercase tabular-nums">
                 PART {pad2(i + 2)} →
               </span>
             </Link>

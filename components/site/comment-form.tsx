@@ -156,6 +156,15 @@ export function CommentForm({ action, className }: { action: Action; className?:
               {state.status === "error" && state.message && <span className="text-accent-ink">{state.message}</span>}
               {state.status === "error" && !state.message && <span className="text-accent-ink">请先修改标出的内容</span>}
             </p>
+            {state.status === "success" && (
+              <span
+                key={state.nonce}
+                aria-hidden
+                className="reading-stamp mono shrink-0 border border-accent px-2 py-1 text-[0.625rem] leading-none tracking-[0.2em] text-accent-ink"
+              >
+                已收到
+              </span>
+            )}
           </div>
         </div>
       </div>

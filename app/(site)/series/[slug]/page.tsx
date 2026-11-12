@@ -39,7 +39,7 @@ export default async function SeriesDetailPage({ params }: Props) {
 
   return (
     <div className="sheet">
-      <header className="wrap border-b border-line-ink pt-8 pb-8 lg:pt-10 lg:pb-10">
+      <header className="page-reveal wrap border-b border-line-ink pt-8 pb-8 lg:pt-10 lg:pb-10">
         <nav aria-label="面包屑" className="mono flex items-baseline gap-2 text-[0.6875rem] tracking-[0.12em] uppercase">
           <Link href="/series" className="text-muted transition-colors hover:text-accent-ink">
             系列索引
@@ -78,16 +78,16 @@ export default async function SeriesDetailPage({ params }: Props) {
           </span>
         </div>
 
-        <ol className="border-t border-line-ink">
+        <ol className="list-stagger border-t border-line-ink">
           {posts.map((p, i) => {
             const { month, day } = dateParts(p.date);
             return (
-              <li key={p.slug} className="group border-b border-line">
+              <li key={p.slug} className="group row-mark border-b border-line">
                 <Link
                   href={`/posts/${p.slug}`}
                   className="grid grid-cols-[4.25rem_minmax(0,1fr)] items-baseline gap-x-4 gap-y-1.5 py-4 transition-colors hover:bg-[color-mix(in_oklab,var(--ink)_4%,transparent)] sm:grid-cols-[5.5rem_minmax(0,1fr)_7rem_4.5rem_2rem] sm:gap-x-6 sm:py-[1.125rem]"
                 >
-                  <span className="mono text-[0.6875rem] tracking-[0.08em] text-muted uppercase tabular-nums">
+                  <span className="mono row-no text-[0.6875rem] tracking-[0.08em] text-muted uppercase tabular-nums">
                     <span className="text-faint">PART</span> {pad2(i + 1)}
                   </span>
 

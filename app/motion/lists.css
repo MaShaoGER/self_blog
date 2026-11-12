@@ -1,0 +1,200 @@
+/* lists：见 tokens.css 的全站动效约定
+   页头入场、列表逐项入场、目录行悬停竖线。
+   全部为一次性动画；减弱动效由 globals.css 统一压缩时长，
+   本文件只负责把错开延迟一并清零（否则 from 状态会停留）。 */
+
+/* ------------------------------------------------------------
+   入场关键帧：位移 6px 内，起始状态写在 from 里，不靠 JS 加类
+   ------------------------------------------------------------ */
+@keyframes lists-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* 结构线自左画出（与首页 .boot 的底线同一种画法） */
+@keyframes lists-rule {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* 机械到位：标记向下 4px 落位，略过冲 */
+@keyframes lists-snap {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* ------------------------------------------------------------
+   页头：内容自上而下依次亮起，底部 1px 结构线自左画出
+   .page-reveal 挂在页头容器上（归档 / 标签 / 系列 / 项目 / 搜索 / 关于）
+   ------------------------------------------------------------ */
+.page-reveal,
+.pi-year {
+  position: relative;
+  /* 原边框让位给自左画出的 1px 线，保留 1px 占位避免跳动 */
+  border-bottom-color: transparent;
+}
+
+.page-reveal::after,
+.pi-year::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 1px;
+  background-color: var(--line-ink);
+  transform-origin: 0 50%;
+  animation: lists-rule var(--dur-3) var(--ease-out) both;
+}
+
+.page-reveal > * {
+  animation: lists-in var(--dur-3) var(--ease-out) both;
+}
+
+.page-reveal > :nth-child(2) {
+  animation-delay: var(--stagger);
+}
+
+.page-reveal > :nth-child(3) {
+  animation-delay: calc(var(--stagger) * 2);
+}
+
+.page-reveal > :nth-child(n + 4) {
+  animation-delay: calc(var(--stagger) * 3);
+}
+
+/* ------------------------------------------------------------
+   列表逐项入场：前 12 项错开 --stagger，之后不再追加延迟
+   .list-stagger 挂在 ol / ul 上
+   ------------------------------------------------------------ */
+.list-stagger > * {
+  animation: lists-in var(--dur-3) var(--ease-out) both;
+}
+
+.list-stagger > :nth-child(2) {
+  animation-delay: calc(var(--stagger) * 1);
+}
+
+.list-stagger > :nth-child(3) {
+  animation-delay: calc(var(--stagger) * 2);
+}
+
+.list-stagger > :nth-child(4) {
+  animation-delay: calc(var(--stagger) * 3);
+}
+
+.list-stagger > :nth-child(5) {
+  animation-delay: calc(var(--stagger) * 4);
+}
+
+.list-stagger > :nth-child(6) {
+  animation-delay: calc(var(--stagger) * 5);
+}
+
+.list-stagger > :nth-child(7) {
+  animation-delay: calc(var(--stagger) * 6);
+}
+
+.list-stagger > :nth-child(8) {
+  animation-delay: calc(var(--stagger) * 7);
+}
+
+.list-stagger > :nth-child(9) {
+  animation-delay: calc(var(--stagger) * 8);
+}
+
+.list-stagger > :nth-child(10) {
+  animation-delay: calc(var(--stagger) * 9);
+}
+
+.list-stagger > :nth-child(11) {
+  animation-delay: calc(var(--stagger) * 10);
+}
+
+.list-stagger > :nth-child(12) {
+  animation-delay: calc(var(--stagger) * 11);
+}
+
+.list-stagger > :nth-child(n + 13) {
+  animation-delay: calc(var(--stagger) * 11);
+}
+
+/* ------------------------------------------------------------
+   行悬停：左缘 2px 橙线自上而下画出，编号移向墨色
+   .row-mark 挂在行容器（li）上，.row-no 挂在编号上
+   ------------------------------------------------------------ */
+.row-mark {
+  position: relative;
+}
+
+.row-mark::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: var(--accent);
+  transform: scaleY(0);
+  transform-origin: 50% 0;
+  transition: transform var(--dur-2) var(--ease-out);
+  pointer-events: none;
+}
+
+.row-mark:hover::before,
+.row-mark:focus-within::before {
+  transform: scaleY(1);
+}
+
+.row-no {
+  transition:
+    color var(--dur-2) var(--ease-out),
+    transform var(--dur-2) var(--ease-out);
+}
+
+.row-mark:hover .row-no,
+.row-mark:focus-within .row-no {
+  color: var(--ink);
+  transform: translateX(4px);
+}
+
+/* ------------------------------------------------------------
+   文章页：系列条与相关文章
+   ------------------------------------------------------------ */
+/* 当前分册号：一次到位落位 */
+.part-mark {
+  display: inline-block;
+  animation: lists-snap var(--dur-2) var(--ease-snap) both;
+}
+
+/* 上一册 / 下一册：文字移向箭头所指方向 2px */
+.strip-arrow {
+  transition: transform var(--dur-2) var(--ease-out);
+}
+
+.strip-link:hover .strip-arrow,
+.strip-link:focus-visible .strip-arrow {
+  transform: translateX(2px);
+}
+
+.strip-link[rel="prev"]:hover .strip-arrow,
+.strip-link[rel="prev"]:focus-visible .strip-arrow {
+  transform: translateX(-2px);
+}
+
+/* ------------------------------------------------------------
+   减弱动效：清零错开延迟，内容立即到位
+   ------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  .page-reveal > *,
+  .list-stagger > *,
+  .page-reveal::after,
+  .pi-year::after,
+  .part-mark {
+    animation-delay: 0ms !important;
+    transition-delay: 0ms !important;
+  }
+}

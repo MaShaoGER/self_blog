@@ -46,7 +46,7 @@ export default async function SearchPage({ searchParams }: Props) {
 
   return (
     <div className="sheet">
-      <header className="wrap border-b border-line-ink pt-10 pb-8 lg:pt-14 lg:pb-10">
+      <header className="page-reveal wrap border-b border-line-ink pt-10 pb-8 lg:pt-14 lg:pb-10">
         <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
           <div className="min-w-0">
             <p className="mono text-[0.6875rem] tracking-[0.14em] text-muted uppercase">
@@ -138,18 +138,18 @@ export default async function SearchPage({ searchParams }: Props) {
               <p className="mb-4 text-[0.9375rem] text-muted">
                 「{q}」命中 <span className="num text-ink">{results.length}</span> 篇
               </p>
-              <ol className="border-t border-line-ink">
+              <ol className="list-stagger border-t border-line-ink">
                 {results.map((r, i) => {
                   const { month, day } = dateParts(r.date);
                   const cat = r.tags[0];
                   const extra = Math.max(0, r.tags.length - 1);
                   return (
-                    <li key={r.slug} className="group border-b border-line">
+                    <li key={r.slug} className="group row-mark border-b border-line">
                       <Link
                         href={`/posts/${r.slug}`}
                         className="grid items-baseline gap-x-5 gap-y-1.5 py-4 transition-colors hover:bg-[color-mix(in_oklab,var(--ink)_4%,transparent)] md:grid-cols-[4.5rem_minmax(0,1fr)_7rem_5.5rem_3.5rem_2rem] md:py-5"
                       >
-                        <span className="mono hidden text-[0.6875rem] tracking-[0.06em] text-faint tabular-nums md:block">
+                        <span className="mono row-no hidden text-[0.6875rem] tracking-[0.06em] text-faint tabular-nums md:block">
                           {pad2(i + 1)}
                         </span>
 

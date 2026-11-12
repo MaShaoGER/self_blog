@@ -14,6 +14,7 @@ import {
   ListOrdered,
   Quote,
   SlidersHorizontal,
+  Video,
   X,
 } from "lucide-react";
 import { Markdown } from "@/components/ui/markdown";
@@ -23,6 +24,7 @@ import { formatDateTime, readingStats, slugify } from "@/lib/format";
 import type { PostInput, PostStatus } from "@/lib/types";
 import { type Edit, fromLocalInput, insertBlock, prefixLines, toLocalInput, wrap } from "./markdown-ops";
 import { imageFiles, uploadImage } from "./upload";
+import { VideoDialog } from "./video-dialog";
 
 type SaveState =
   | { kind: "idle" }
@@ -46,6 +48,8 @@ export function Editor({ initial, originalSlug: initialOriginal }: { initial: Po
   const [uploads, setUploads] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [videoOpen, setVideoOpen] = useState(false);
+  const videoInsertAt = useRef(0);
   const [, startTransition] = useTransition();
 
   const textRef = useRef<HTMLTextAreaElement>(null);
@@ -205,6 +209,20 @@ export function Editor({ initial, originalSlug: initialOriginal }: { initial: Po
         }
       }),
     );
+  }
+
+  // 打开弹窗时记住光标位置；弹窗期间正文无法编辑，插入时再按当前长度收敛。
+  function openVideoDialog() {
+    if (uploads > 0) return;
+    videoInsertAt.current = selection()[0];
+    setVideoOpen(true);
+  }
+
+  function insertVideoResource(id: string) {
+    const content = postRef.current.content;
+    const pos = Math.min(Math.max(videoInsertAt.current, 0), content.length);
+    applyEdit(insertBlock(content, pos, "```resource\n" + id + "\n```"));
+    setNotice("视频已插入正文；该附件默认不列入公开资源目录");
   }
 
   async function uploadCover(file: File | undefined) {
@@ -397,6 +415,23 @@ export function Editor({ initial, originalSlug: initialOriginal }: { initial: Po
                   e.target.value = "";
                 }}
               />
+              <button
+                type="button"
+                disabled={uploads > 0}
+                onClick={(event) => {
+                  // Safari 点击按钮不聚焦；显式聚焦，关闭弹窗后焦点能回到这里。
+                  event.currentTarget.focus();
+                  openVideoDialog();
+                }}
+                aria-label="插入视频"
+                aria-haspopup="dialog"
+                aria-expanded={videoOpen}
+                title={uploads > 0 ? "图片正在上传，请稍后插入视频" : "插入视频"}
+                className="inline-flex h-10 shrink-0 items-center gap-1.5 px-2.5 text-sm text-muted transition-colors hover:bg-surface-2 hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Video className="size-[1.05rem]" strokeWidth={1.7} />
+                插入视频
+              </button>
               <span className="ml-auto shrink-0 pl-3 text-xs tabular-nums text-faint max-sm:hidden">
                 {stats.wordCount} 字，约 {stats.readingTime} 分钟
               </span>
@@ -592,6 +627,8 @@ export function Editor({ initial, originalSlug: initialOriginal }: { initial: Po
           <p className="pointer-events-auto max-w-md border border-line-strong bg-ink px-4 py-2.5 text-sm text-bg shadow-[var(--shadow)]">{notice}</p>
         )}
       </div>
+
+      {videoOpen && <VideoDialog onClose={() => setVideoOpen(false)} onInsert={insertVideoResource} />}
     </div>
   );
 }

@@ -45,7 +45,7 @@ export function CodeToolbar({ code, language }: { code: string; language: string
     if (!ok) return;
     setCopied(true);
     if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setCopied(false), 2000);
+    timer.current = setTimeout(() => setCopied(false), 1500);
   }
 
   return (
@@ -69,7 +69,7 @@ export function CodeToolbar({ code, language }: { code: string; language: string
         onClick={() => void copy()}
         aria-label={copied ? `已复制 ${language} 代码` : `复制 ${language} 代码`}
         className={cn(
-          "flex shrink-0 cursor-pointer items-center gap-1.5 border-l border-line-ink px-3 text-[0.625rem] leading-none tracking-[0.16em] uppercase transition-colors",
+          "reading-copy-key flex shrink-0 cursor-pointer items-center gap-1.5 border-l border-line-ink px-3 text-[0.625rem] leading-none tracking-[0.16em] uppercase transition-colors",
           copied ? "bg-bg text-ink" : "text-muted hover:bg-bg hover:text-ink",
         )}
       >
@@ -77,7 +77,9 @@ export function CodeToolbar({ code, language }: { code: string; language: string
           aria-hidden
           className={cn("led scale-50", copied ? "led-green opacity-100" : "opacity-25")}
         />
-        {copied ? "已复制" : "复制"}
+        <span className="reading-copy-label" data-copied={copied ? "true" : undefined}>
+          {copied ? "已复制" : "复制"}
+        </span>
       </button>
     </div>
   );

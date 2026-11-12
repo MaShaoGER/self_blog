@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PostTitle } from "@/components/site/post-link";
 import { notFound } from "next/navigation";
 import { getApprovedComments } from "@/lib/comments";
 import { siteUrl } from "@/lib/env";
@@ -91,7 +92,9 @@ export default async function PostPage({ params }: Props) {
           </span>
         </div>
 
-        <h1 className="display mt-5 text-[clamp(2rem,5.4vw,3.5rem)] leading-[0.98] text-ink">{post.title}</h1>
+        <PostTitle slug={post.slug} className="display relative z-10 mt-5 text-[clamp(2rem,5.4vw,3.5rem)] leading-[0.98] text-ink">
+          {post.title}
+        </PostTitle>
 
         {post.excerpt && (
           <p className="mt-4 max-w-[52ch] text-[1.0625rem] leading-relaxed text-ink-soft">{post.excerpt}</p>

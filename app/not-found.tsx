@@ -21,7 +21,7 @@ export default async function RootNotFound() {
   ];
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="status-boot flex min-h-dvh flex-col">
       <header className="border-b border-line-ink">
         <div className="wrap flex h-16 items-center justify-between gap-4">
           <Link href="/" className="flex min-w-0 items-baseline gap-2.5">
@@ -66,13 +66,13 @@ export default async function RootNotFound() {
       </header>
 
       <main className="sheet flex-1">
-        <div className="wrap grid gap-y-8 border-b border-line-ink pt-12 pb-10 md:grid-cols-[16rem_minmax(0,1fr)] md:gap-x-12 lg:grid-cols-[20rem_minmax(0,1fr)] lg:pt-16">
-          <div className="flex flex-col gap-5">
+        <div className="wrap status-rule grid gap-y-8 border-b border-line-ink pt-12 pb-10 md:grid-cols-[16rem_minmax(0,1fr)] md:gap-x-12 lg:grid-cols-[20rem_minmax(0,1fr)] lg:pt-16">
+          <div className="status-step flex flex-col gap-5">
             <div>
               <p className="mono text-[0.6875rem] tracking-[0.14em] text-muted uppercase">
                 ERROR <span aria-hidden className="text-faint">/</span> 404
               </p>
-              <p aria-hidden className="display mt-3 text-[clamp(4rem,14vw,7rem)] text-faint leading-none">
+              <p aria-hidden className="status-code display mt-3 text-[clamp(4rem,14vw,7rem)] text-faint leading-none">
                 404
               </p>
               <p className="mono mt-2 text-[0.6875rem] tracking-[0.12em] text-muted uppercase">NO ROUTE</p>
@@ -83,7 +83,7 @@ export default async function RootNotFound() {
             </p>
           </div>
 
-          <div className="border-t border-line-ink pt-6 md:border-t-0 md:border-l md:border-l-line-strong md:pt-0 md:pl-10 lg:pl-12">
+          <div className="status-step status-step-2 border-t border-line-ink pt-6 md:border-t-0 md:border-l md:border-l-line-strong md:pt-0 md:pl-10 lg:pl-12">
             <h1 className="display text-[clamp(1.75rem,4vw,2.5rem)]">这一页不存在</h1>
             <p className="mt-4 max-w-[52ch] leading-relaxed text-ink-soft">
               请求的地址没有对应的卷宗：链接可能写错了，或者这篇文章已经撤下。

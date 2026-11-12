@@ -62,7 +62,7 @@ export function Ruler({ className, ticks = 24 }: { className?: string; ticks?: n
       aria-hidden
       viewBox={`0 0 ${ticks * 8} 10`}
       preserveAspectRatio="none"
-      className={cn("h-2.5 w-full", className)}
+      className={cn("mark-ruler h-2.5 w-full", className)}
       fill="none"
       stroke="currentColor"
       strokeWidth="1"
@@ -92,7 +92,7 @@ export function Barcode({ value, className, height = 28 }: { value: string; clas
       aria-hidden
       viewBox={`0 0 ${total} ${height}`}
       preserveAspectRatio="none"
-      className={cn("h-7 w-full", className)}
+      className={cn("mark-barcode h-7 w-full", className)}
       fill="currentColor"
     >
       {bars.map((b, i) => {
@@ -127,9 +127,9 @@ export function NoMark({
   className?: string;
 }) {
   return (
-    <span className={cn("mono text-[0.6875rem] tracking-[0.08em] whitespace-nowrap", className)}>
+    <span className={cn("no-mark-tag mono text-[0.6875rem] tracking-[0.08em] whitespace-nowrap", className)}>
       <span className="text-faint">{prefix}</span>
-      <span className="ml-1 text-ink tabular-nums">{typeof value === "number" ? String(value).padStart(3, "0") : value}</span>
+      <span className="no-mark-num ml-1 text-ink tabular-nums">{typeof value === "number" ? String(value).padStart(3, "0") : value}</span>
     </span>
   );
 }

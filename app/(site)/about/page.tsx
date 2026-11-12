@@ -41,7 +41,7 @@ export default async function AboutPage() {
     <div className="sheet">
       <div className="wrap pt-10 pb-16 lg:pt-14 lg:pb-20">
         {/* 页头 */}
-        <div className="mono flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-line-ink pb-2 text-[0.6875rem] tracking-[0.14em] uppercase">
+        <div className="page-reveal mono flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-line-ink pb-2 text-[0.6875rem] tracking-[0.14em] uppercase">
           <span className="flex flex-wrap items-baseline gap-x-3">
             <NoMark prefix="DOC." value="ABOUT" className="text-ink" />
             <span aria-hidden className="text-faint">
@@ -52,7 +52,7 @@ export default async function AboutPage() {
           <span className="text-muted tabular-nums">REV.02</span>
         </div>
 
-        <div className="mt-8 grid gap-10 lg:mt-10 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-start lg:gap-x-14">
+        <div className="list-stagger mt-8 grid gap-10 lg:mt-10 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-start lg:gap-x-14">
           {/* 左：简介 */}
           <div className="min-w-0 self-stretch">
             <div className="flex items-baseline gap-4">

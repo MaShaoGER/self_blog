@@ -1,5 +1,6 @@
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
+import { PageTransition } from "@/components/site/page-transition";
 import { getSettings } from "@/lib/settings";
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
@@ -14,7 +15,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       </a>
       <SiteHeader title={s.title} tagline={s.tagline} navigation={s.navigation} brandPrefix={s.footer.brandPrefix} />
       <main id="main" className="relative flex-1">
-        {children}
+        <PageTransition>{children}</PageTransition>
       </main>
       <SiteFooter title={s.title} author={s.author} navigation={s.navigation} footer={s.footer} />
     </>

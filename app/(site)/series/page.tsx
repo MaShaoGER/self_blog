@@ -25,7 +25,7 @@ export default async function SeriesPage() {
 
   return (
     <div className="sheet">
-      <header className="wrap border-b border-line-ink pt-10 pb-8 lg:pt-14 lg:pb-10">
+      <header className="page-reveal wrap border-b border-line-ink pt-10 pb-8 lg:pt-14 lg:pb-10">
         <p className="mono text-[0.6875rem] tracking-[0.14em] text-muted uppercase">
           SERIES <span aria-hidden className="text-faint">/</span> 索引
         </p>
@@ -66,16 +66,16 @@ export default async function SeriesPage() {
             </p>
           </div>
         ) : (
-          <ul className="border-t border-line-ink">
+          <ul className="list-stagger border-t border-line-ink">
             {series.map((s, i) => {
               const span = yearSpan(s.posts.map((p) => p.date));
               return (
-                <li key={s.name} className="border-b border-line">
+                <li key={s.name} className="row-mark border-b border-line">
                   <Link
                     href={`/series/${encodeURIComponent(s.name)}`}
                     className="group grid grid-cols-[2.25rem_minmax(0,1fr)_2.5rem] items-baseline gap-x-3 gap-y-2 py-4 transition-colors hover:bg-[color-mix(in_oklab,var(--ink)_4%,transparent)] sm:grid-cols-[3.5rem_minmax(0,1fr)_6.5rem_3.5rem_2rem] sm:gap-x-6 sm:py-[1.125rem]"
                   >
-                    <span className="mono text-[0.6875rem] tracking-[0.06em] text-faint tabular-nums">
+                    <span className="mono row-no text-[0.6875rem] tracking-[0.06em] text-faint tabular-nums">
                       {pad2(i + 1)}
                     </span>
 

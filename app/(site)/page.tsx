@@ -2,9 +2,9 @@ import Link from "next/link";
 import { getLivePosts } from "@/lib/posts";
 import { readProjects } from "@/lib/projects";
 import { getSettings } from "@/lib/settings";
-import { PostIndex } from "@/components/site/post-index";
+import { DeckKnob, DeckScreen, HomeDeckProvider, HomePostIndex } from "@/components/site/home-deck";
 import { Barcode, NoMark, Ruler } from "@/components/ui/marks";
-import { GlowScreen, Knob, ScrewCorners, SilkStrip } from "@/components/ui/hardware";
+import { ScrewCorners, SilkStrip } from "@/components/ui/hardware";
 import { dateParts } from "@/components/site/num-text";
 
 export const dynamic = "force-dynamic";
@@ -26,11 +26,12 @@ export default async function HomePage() {
   const words = posts.reduce((n, p) => n + p.wordCount, 0);
 
   return (
+    <HomeDeckProvider posts={posts}>
     <div className="sheet [&_p]:[overflow-wrap:anywhere] [&_h1]:[overflow-wrap:anywhere] [&_h2]:[overflow-wrap:anywhere] [&_dt]:[overflow-wrap:anywhere] [&_dd]:[overflow-wrap:anywhere] [&_aside_span]:[overflow-wrap:anywhere]">
       {/* 铭牌 */}
       <section
         aria-labelledby="masthead"
-        className="wrap grid gap-y-9 border-b border-line-ink pt-10 pb-8 md:grid-cols-[minmax(0,1fr)_16rem] md:gap-x-12 lg:pt-14 lg:pb-10"
+        className="wrap boot grid gap-y-9 pt-10 pb-8 md:grid-cols-[minmax(0,1fr)_16rem] md:gap-x-12 lg:pt-14 lg:pb-10"
       >
         <div className="min-w-0">
           <div className="mono mb-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.625rem] tracking-[0.14em] text-muted uppercase">
@@ -70,16 +71,7 @@ export default async function HomePage() {
           <ScrewCorners className="metal p-4 pt-6 pb-5">
             <SilkStrip className="mb-3 max-w-full [overflow-wrap:anywhere]">{h.statusTitle}</SilkStrip>
 
-            <GlowScreen className="px-3 py-2.5">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="min-w-0 text-[0.625rem] tracking-[0.18em]">{h.statusOnline}</span>
-                <span aria-hidden className="led led-green shrink-0 scale-[0.85]" />
-              </div>
-              <p className="mt-1 text-[1.375rem] leading-none tracking-[0.1em] tabular-nums">
-                {String(posts.length).padStart(2, "0")}
-                <span className="ml-1.5 text-[0.5625rem] tracking-[0.18em]">{h.statusEntries}</span>
-              </p>
-            </GlowScreen>
+            <DeckScreen online={h.statusOnline} entries={h.statusEntries} />
 
             <dl className="mt-3 space-y-1.5">
               {[
@@ -94,12 +86,12 @@ export default async function HomePage() {
               ))}
             </dl>
 
-            {/* 旋钮：装饰性读数，作面板视觉重心 */}
+            {/* 旋钮：按分类筛选下方目录 */}
             <div
               className="mt-4 flex items-center justify-between gap-3 border-t pt-3.5"
               style={{ borderColor: "var(--metal-line)" }}
             >
-              <Knob angle={38} size={44} label="面板刻度，装饰性" />
+              <DeckKnob />
               <div className="min-w-0 text-right">
                 <span className="mono block text-[0.625rem] tracking-[0.16em] uppercase opacity-70">{h.statusRevision}</span>
                 <span className="mono block text-[0.625rem] tracking-[0.16em] uppercase opacity-50">{h.statusScale}</span>
@@ -198,9 +190,10 @@ export default async function HomePage() {
             </p>
           </div>
         ) : (
-          <PostIndex posts={posts} />
+          <HomePostIndex />
         )}
       </section>
     </div>
+    </HomeDeckProvider>
   );
 }
